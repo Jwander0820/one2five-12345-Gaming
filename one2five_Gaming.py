@@ -102,7 +102,41 @@ class GAME12345 (object):
         random.shuffle(enemy) # 電腦的牌隨機洗牌
         # 回傳大局得分和小局得分的清單 [對手:玩家:和局] = [x, y, z]
         return GAME12345().who_win(enemy, input_list)
-
+    
+    def BaseRule_Autotest_Case_Analysis(self,input_list):
+        # 基本規則函式 - 用於自動測試使用
+        # 此處僅回傳case做案例分析
+        case = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        enemy = [1, 2, 3, 4, 5] # 對手的牌
+        random.shuffle(enemy) # 電腦的牌隨機洗牌
+        
+        result,p = GAME12345().who_win(enemy, input_list)
+        if p == [5,0,0] or p == [0,5,0]: # 0
+            case[0] = 1
+        elif p == [4,1,0] or p == [1,4,0]: # 1
+            case[1] = 1
+        elif p == [0,1,4] or p == [1,0,4]: # 2 # 發生機率為0
+            case[2] = 1
+        elif p == [4,0,1] or p == [0,4,1]: # 3
+            case[3] = 1    
+        elif p == [3,2,0] or p == [2,3,0]: # 4
+            case[4] = 1    
+        elif p == [3,0,2] or p == [0,3,2]: # 5
+            case[5] = 1   
+        elif p == [2,0,3] or p == [3,0,2]: # 6 # 發生機率為0
+            case[6] = 1            
+        elif p == [3,1,1] or p == [1,3,1]: # 7
+            case[7] = 1
+        elif p == [2,1,2] or p == [1,2,2]: # 8
+            case[8] = 1
+        elif p == [0,0,5]: # 9 # 三種和局案例
+            case[9] = 1
+        elif p == [1,1,3]: # 10
+            case[10] = 1   
+        elif p == [2,2,1]: # 11
+            case[11] = 1
+        return case
+    
     def BaseRule_for_Advance(self):
         # 基本規則函式 - 用於提供給進階規則使用，執行一次完成5小局，回傳雙方局面，提供給後續進階版本使用
         match = [1, 2, 3, 4, 5] # 對手的牌
