@@ -473,10 +473,21 @@ class GAME12345 (object):
     
 if __name__ == '__main__':
     # GAME12345().BaseRule() #基本規則版本
-    
-    # GAME12345().AdvanceRule() #進階規則版本
-    
-    enemy = [1,2,3,4,5]
-    player = [2,1,4,5,3]
-    x = GAME12345().who_win(enemy, player)
-    print(x)
+    GAME12345().AdvanceRule() #進階規則版本
+    again = 0
+    while again < 1:
+        try:
+            YNlist = ['Y','N','y','n']
+            more = str(input('你要再玩一次嗎? : (Y/N)'))
+            if more not in YNlist:
+                print('請輸入Y/N')
+                continue
+            if more == 'Y' or more == 'y':
+                # GAME12345().BaseRule() #基本規則版本
+                GAME12345().AdvanceRule() #進階規則版本
+                again += -1
+            elif more == 'N' or more == 'n':
+                None
+        except:
+            print('請輸入Y/N')
+        again += 1
