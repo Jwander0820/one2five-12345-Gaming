@@ -259,6 +259,7 @@ class GAME12345 (object):
         while again < 1:
             try: #若是輸入的值不符合規則，則會跳出迴圈，並提示輸入正確的格式
                 card = str(input('選擇你的功能卡 : '))
+                card = card.upper() # 小寫英文字自動轉換成大寫
                 if card not in player_deck:
                     print('請輸入牌庫內的功能卡')
                     continue
@@ -477,16 +478,17 @@ if __name__ == '__main__':
     again = 0
     while again < 1:
         try:
-            YNlist = ['Y','N','y','n']
+            YNlist = ['Y','N']
             more = str(input('你要再玩一次嗎? : (Y/N)'))
+            more = more.upper()
             if more not in YNlist:
                 print('請輸入Y/N')
                 continue
-            if more == 'Y' or more == 'y':
+            if more == 'Y':
                 # GAME12345().BaseRule() #基本規則版本
                 GAME12345().AdvanceRule() #進階規則版本
                 again += -1
-            elif more == 'N' or more == 'n':
+            elif more == 'N':
                 None
         except:
             print('請輸入Y/N')
