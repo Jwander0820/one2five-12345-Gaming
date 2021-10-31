@@ -16,6 +16,7 @@
 from one2five_Gaming import *
 GAME12345().BaseRule()
 ```
+或是在windows系統下可以執行 **one2five_Gaming_BaseRule.exe**
 
 ## 細則
 1 勝過 5 <br> 
@@ -53,6 +54,7 @@ GAME12345().BaseRule()
 from one2five_Gaming import *
 GAME12345().AdvanceRule()
 ```
+或是在windows系統下可以執行 **one2five_Gaming_AdvancedRule.exe**
 
 ## 功能卡說明
 **新增 J、Q、K、JOKER 四張功能卡**
