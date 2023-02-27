@@ -54,6 +54,9 @@ const drop = (event) => {
           playHistory.player2History.push(src.id);
           player1Turn();
           console.log(playHistory)
+          if (playHistory.player2History.length === 5){
+            player2Finish();
+          }
           break;
         }
       }
@@ -87,3 +90,26 @@ resetButton.addEventListener("click", () => {
     }
   }
 });
+
+
+const player2Finish = () => {
+  // player2 完成牌局的相關操作
+  // 向後端請求結果
+  console.log("後端做事")
+  fetch('http://localhost:5000/game_result', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(playHistory)
+  })
+ 
+    .then(response => response.json())
+    .then(result => {
+      // 處理後端回傳的結果
+      console.log("Success:", JSON.stringify(result));
+    })
+    .catch(error => {
+      console.error("Error:", error);
+    });
+};
