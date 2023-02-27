@@ -1,0 +1,32 @@
+/* CSS code */
+.player,
+.player1,
+.player2,
+.center {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  width: 500px;
+  height: 150px;
+  margin: 10px auto;
+  text-align: center;
+}
+
+.card {
+  width: 100px;
+  height: 150px;
+  border: 1px solid black;
+  margin: 10px;
+  float: left;
+}
+
+
+#resetButton {
+  position: absolute;
+  top: 40%;
+  left: 70%;
+  transform: translate(50%, -50%);
+  display: inline-block;
+  margin: 0;
+  padding: 10px 20px;
+}
