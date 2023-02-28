@@ -1,4 +1,9 @@
 /* CSS code */
+.wrap{
+  width: 80%;
+  margin: 20px auto;
+}
+
 .player,
 .player1,
 .player2,
@@ -16,17 +21,48 @@
   width: 100px;
   height: 150px;
   border: 1px solid black;
-  margin: 10px;
+  margin: 10px auto;
   float: left;
 }
 
 
-#resetButton {
-  position: absolute;
-  top: 40%;
-  left: 70%;
-  transform: translate(50%, -50%);
+.button {
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  padding: 15px 30px;
+  text-align: center;
+  text-decoration: none;
   display: inline-block;
-  margin: 0;
-  padding: 10px 20px;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+}
+
+.tablestyle {
+  width: 80%;
+  margin: 20px auto;
+}
+
+table {
+  border-spacing: 0;
+  width: 100%;
+}
+
+tr {
+  text-align: center;
+}
+th {
+  padding: 10px;
+}
+table tbody tr:nth-child(odd){
+  background-color: #eee
+}
+table thead {
+  background-color: blue;
+  color: white;
+}
+table thead th:first-child {
+  border-radius: 5px 0 0 0;
+  border: 1px solid blue;
 }

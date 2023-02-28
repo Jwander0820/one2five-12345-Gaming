@@ -54,7 +54,7 @@ const drop = (event) => {
           playHistory.player2History.push(src.id);
           player1Turn();
           console.log(playHistory)
-          if (playHistory.player2History.length === 5){
+          if (playHistory.player2History.length === 5) {
             player2Finish();
           }
           break;
@@ -103,13 +103,32 @@ const player2Finish = () => {
     },
     body: JSON.stringify(playHistory)
   })
- 
+
     .then(response => response.json())
     .then(result => {
       // 處理後端回傳的結果
       console.log("Success:", JSON.stringify(result));
-    })
+      if (result === 'Player 1 wins') {
+        updateScore('player1', 'win');
+        updateScore('player2', 'lose');
+      }else if (result === 'Player 2 wins'){
+        updateScore('player1', 'lose');
+        updateScore('player2', 'win');
+      }else{
+        updateScore('player1', 'draw');
+        updateScore('player2', 'draw');
+      }})
     .catch(error => {
       console.error("Error:", error);
     });
+};
+
+const updateScore = (player, result) => {
+  if (result === 'win') {
+    document.getElementById(`${player}-win`).textContent = parseInt(document.getElementById(`${player}-win`).textContent) + 1;
+  } else if (result === 'lose') {
+    document.getElementById(`${player}-lose`).textContent = parseInt(document.getElementById(`${player}-lose`).textContent) + 1;
+  } else if (result === 'draw') {
+    document.getElementById(`${player}-draw`).textContent = parseInt(document.getElementById(`${player}-draw`).textContent) + 1;
+  }
 };
