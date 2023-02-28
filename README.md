@@ -12,11 +12,18 @@
 
 基本規則的遊戲
 
-```
+1. 使用Github Pages部屬的靜態網頁!
+https://jwander0820.github.io/one2five_12345_Gaming/
+
+2. Python環境
+```Python
 from one2five_Gaming import *
 GAME12345().BaseRule()
 ```
-或是在windows系統下可以執行 **one2five_Gaming_BaseRule.exe**
+
+3. Windows EXE 
+
+    windows系統下可以執行 **one2five_Gaming_BaseRule.exe**
 
 ## 細則
 1 勝過 5 <br> 

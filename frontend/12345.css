@@ -1,7 +1,7 @@
 /* CSS code */
 .wrap{
   width: 80%;
-  margin: 20px auto;
+  margin: auto;
 }
 
 .player,
@@ -21,7 +21,7 @@
   width: 100px;
   height: 150px;
   border: 1px solid black;
-  margin: 10px auto;
+  margin: auto;
   float: left;
 }
 
@@ -30,18 +30,18 @@
   background-color: #4CAF50;
   border: none;
   color: white;
-  padding: 15px 30px;
+  padding: 10px 30px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
   font-size: 16px;
-  margin: 4px 2px;
+  margin: auto;
   cursor: pointer;
 }
 
 .tablestyle {
-  width: 80%;
-  margin: 20px auto;
+  width: 60%;
+  margin: 10px auto;
 }
 
 table {
