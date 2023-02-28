@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel="stylesheet" type="text/css" href="12345.css">
+  <!-- rel 屬性表示資源類型，對應的值為 "stylesheet"，表示這是一個樣式表 -->
+  <!-- type 屬性表示檔案類型，對應的值為 "text/css"，表示這是一個 CSS 檔案 -->
+  <!-- href 屬性表示檔案位置，對應的值是 CSS 檔案的絕對或相對路徑。 -->
+</head>
+
+<!-- HTML code -->
+<div class="tablestyle">
+  <table id="scoreboard">
+    <tr>
+      <th>玩家</th>
+      <th>勝</th>
+      <th>負</th>
+      <th>平手</th>
+    </tr>
+    <tr>
+      <td>電腦</td>
+      <td id="player1-win">0</td>
+      <td id="player1-lose">0</td>
+      <td id="player1-draw">0</td>
+    </tr>
+    <tr>
+      <td>玩家2</td>
+      <td id="player2-win">0</td>
+      <td id="player2-lose">0</td>
+      <td id="player2-draw">0</td>
+    </tr>
+  </table>
+</div>
+
+<!-- 玩家1(電腦)卡牌 -->
+
+<body>
+  <div class="wrap">
+    <div id="player1" class="player">
+      <div class="card" id="p1_card1" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <img id="p1_drag1" src="./public/card/p2_card_1_diamond.png" width="100px" height="150px" draggable="true"
+          ondragstart="drag(event)">
+      </div>
+      <div class="card" id="p1_card2" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <img id="p1_drag2" src="./public/card/p2_card_2_diamond.png" width="100px" height="150px" draggable="true"
+          ondragstart="drag(event)">
+      </div>
+      <div class="card" id="p1_card3" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <img id="p1_drag3" src="./public/card/p2_card_3_diamond.png" width="100px" height="150px" draggable="true"
+          ondragstart="drag(event)">
+      </div>
+      <div class="card" id="p1_card4" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <img id="p1_drag4" src="./public/card/p2_card_4_diamond.png" width="100px" height="150px" draggable="true"
+          ondragstart="drag(event)">
+      </div>
+      <div class="card" id="p1_card5" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <img id="p1_drag5" src="./public/card/p2_card_5_diamond.png" width="100px" height="150px" draggable="true"
+          ondragstart="drag(event)">
+      </div>
+    </div>
+    <div id="center-top" class="center" ondrop="drop(event)" ondragover="allowDrop(event)">
+      <!-- Center Top -->
+      <div class="card" id="p1_area1" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+      <div class="card" id="p1_area2" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+      <div class="card" id="p1_area3" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+      <div class="card" id="p1_area4" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+      <div class="card" id="p1_area5" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+    </div>
+
+    <div align="center">
+      <button id="resetButton" class="button">Restart</button>
+    </div>
+
+    <div id="center-bottom" class="center" ondrop="drop(event)" ondragover="allowDrop(event)">
+      <!-- Center Bottom -->
+      <div class="card" id="p2_area1" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+      <div class="card" id="p2_area2" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+      <div class="card" id="p2_area3" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+      <div class="card" id="p2_area4" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+      <div class="card" id="p2_area5" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+    </div>
+    <!-- 玩家2卡牌 -->
+    <div id="player2" class="player">
+      <div class="card" id="p2_card1" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <img id="p2_drag1" src="./public/card/p1_card_1_spades.png" width="100px" height="150px" draggable="true"
+          ondragstart="drag(event)">
+      </div>
+      <div class="card" id="p2_card2" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <img id="p2_drag2" src="./public/card/p1_card_2_spades.png" width="100px" height="150px" draggable="true"
+          ondragstart="drag(event)">
+      </div>
+      <div class="card" id="p2_card3" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <img id="p2_drag3" src="./public/card/p1_card_3_spades.png" width="100px" height="150px" draggable="true"
+          ondragstart="drag(event)">
+      </div>
+      <div class="card" id="p2_card4" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <img id="p2_drag4" src="./public/card/p1_card_4_spades.png" width="100px" height="150px" draggable="true"
+          ondragstart="drag(event)">
+      </div>
+      <div class="card" id="p2_card5" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <img id="p2_drag5" src="./public/card/p1_card_5_spades.png" width="100px" height="150px" draggable="true"
+          ondragstart="drag(event)">
+      </div>
+      <!-- 其他卡牌 -->
+    </div>
+  </div>
+  <script src="12345.js"></script>
+</body>
+
+</html>
