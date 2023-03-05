@@ -18,7 +18,7 @@ https://jwander0820.github.io/one2five_12345_Gaming/
     玩家為下方黑桃撲克牌，拖曳卡牌到個人的置牌區中會自動放入卡牌，依序由左至右擺放，五張卡牌出完將紀錄勝負結果於上方表格中，
 點擊Restart即可重新開啟新一局遊戲。
 
-<iframe src="https://jwander0820.github.io/one2five_12345_Gaming/"></iframe>
+<iframe src="https://jwander0820.github.io/one2five_12345_Gaming/index.html"></iframe>
 
 
 2. Python環境
