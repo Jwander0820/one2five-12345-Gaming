@@ -64,6 +64,27 @@ const drop = (event) => {
   }
 };
 
+//處理點擊卡牌事件
+const handleClick = (event) => {
+  const src = event.target;
+  const srcParent = src.closest(".player");
+  const areaCards = document.querySelectorAll("#center-bottom .card");
+
+  for (let i = 0; i < areaCards.length; i++) {
+    if (!areaCards[i].hasChildNodes()) {
+      areaCards[i].appendChild(src);
+      src.style.display = "block";
+      playHistory.player2History.push(src.id);
+      player1Turn();
+      console.log(playHistory)
+      if (playHistory.player2History.length === 5) {
+        player2Finish();
+      }
+      break;
+    }
+  }
+};
+
 // 重設遊戲
 const resetButton = document.getElementById("resetButton");
 resetButton.addEventListener("click", () => {
