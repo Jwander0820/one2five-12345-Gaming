@@ -6,30 +6,35 @@ const drag = (event) => {
   event.dataTransfer.setData("text", event.target.id);
 };
 
-var array = [0, 1, 2, 3, 4]
+let array = [0, 1, 2, 3, 4];
+
 function getRandomValue() {
   if (array.length === 0) {
     return null;
   }
-  var randomIndex = Math.floor(Math.random() * array.length);
-  var randomValue = array[randomIndex];
+  const randomIndex = Math.floor(Math.random() * array.length);
+  const randomValue = array[randomIndex];
   array.splice(randomIndex, 1);
   return randomValue;
 }
+
+const placeCard = (areaCards, src, playHistory, player) => {
+  for (let i = 0; i < areaCards.length; i++) {
+    if (!areaCards[i].hasChildNodes()) {
+      areaCards[i].appendChild(src);
+      src.style.display = "block";
+      playHistory[player + 'History'].push(src.id);
+      break;
+    }
+  }
+};
 
 const player1Turn = () => {
   const player1Cards = document.querySelectorAll("#player1 .card");
   const areaCards = document.querySelectorAll("#center-top .card");
   const random_card = getRandomValue();
-  const src = player1Cards[random_card].firstElementChild
-  for (let j = 0; j < areaCards.length; j++) {
-    if (!areaCards[j].hasChildNodes()) {
-      areaCards[j].appendChild(src);
-      src.style.display = "block";
-      playHistory.player1History.push(src.id);
-      break;
-    }
-  }
+  const src = player1Cards[random_card].firstElementChild;
+  placeCard(areaCards, src, playHistory, 'player1');
 };
 
 let playHistory = {
@@ -47,18 +52,11 @@ const drop = (event) => {
   if (tgt.id === "center-top" || tgt.id === "center-bottom") {
     if (srcParent.id === "player2" && tgt.id === "center-bottom") {
       const areaCards = document.querySelectorAll("#center-bottom .card");
-      for (let i = 0; i < areaCards.length; i++) {
-        if (!areaCards[i].hasChildNodes()) {
-          areaCards[i].appendChild(src);
-          src.style.display = "block";
-          playHistory.player2History.push(src.id);
-          player1Turn();
-          console.log(playHistory)
-          if (playHistory.player2History.length === 5) {
-            player2Finish();
-          }
-          break;
-        }
+      placeCard(areaCards, src, playHistory, 'player2');
+      player1Turn();
+      console.log(playHistory)
+      if (playHistory.player2History.length === 5) {
+        player2Finish();
       }
     }
   }
@@ -70,25 +68,18 @@ const handleClick = (event) => {
   const srcParent = src.closest(".player");
   const areaCards = document.querySelectorAll("#center-bottom .card");
 
-  for (let i = 0; i < areaCards.length; i++) {
-    if (!areaCards[i].hasChildNodes()) {
-      areaCards[i].appendChild(src);
-      src.style.display = "block";
-      playHistory.player2History.push(src.id);
-      player1Turn();
-      console.log(playHistory)
-      if (playHistory.player2History.length === 5) {
-        player2Finish();
-      }
-      break;
-    }
+  placeCard(areaCards, src, playHistory, 'player2');
+  player1Turn();
+  console.log(playHistory);
+  if (playHistory.player2History.length === 5) {
+    player2Finish();
   }
 };
 
 // 重設遊戲
 const resetButton = document.getElementById("resetButton");
 resetButton.addEventListener("click", () => {
-  console.log("翻桌(╯‵□′)╯︵┻━┻")
+  console.log("翻桌(╯‵□′)╯︵┻━┻");
   playHistory = { player1History: [], player2History: [] };  //重設變數
   array = [0, 1, 2, 3, 4];  //重設變數
   const player1Cards = document.querySelectorAll("#player1 .card");
@@ -112,11 +103,10 @@ resetButton.addEventListener("click", () => {
   }
 });
 
-
 const player2Finish = () => {
   // player2 完成牌局的相關操作
   // 向後端請求結果
-  console.log("後端做事")
+  console.log("後端做事");
   fetch('http://localhost:5000/game_result', {
     method: 'POST',
     headers: {
@@ -124,7 +114,6 @@ const player2Finish = () => {
     },
     body: JSON.stringify(playHistory)
   })
-
     .then(response => response.json())
     .then(result => {
       // 處理後端回傳的結果
@@ -132,13 +121,14 @@ const player2Finish = () => {
       if (result === 'Player 1 wins') {
         updateScore('player1', 'win');
         updateScore('player2', 'lose');
-      }else if (result === 'Player 2 wins'){
+      } else if (result === 'Player 2 wins') {
         updateScore('player1', 'lose');
         updateScore('player2', 'win');
-      }else{
+      } else {
         updateScore('player1', 'draw');
         updateScore('player2', 'draw');
-      }})
+      }
+    })
     .catch(error => {
       console.error("Error:", error);
     });
