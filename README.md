@@ -25,9 +25,23 @@ from one2five_Gaming import *
 GAME12345().BaseRule()
 ```
 
-3. Windows EXE 
+3. Windows EXE
 
     windows系統下可以執行 **one2five_Gaming_BaseRule.exe**
+
+## 本地端示範
+若想在本地端同時啟動前端與後端，可以使用 `serve.py` 來啟動
+簡易的 Flask API 以及提供靜態檔案的 HTTP server。
+
+1. 安裝依賴：
+   ```bash
+   pip install flask flask-cors
+   ```
+2. 執行腳本：
+   ```bash
+   python serve.py
+   ```
+   之後即可開啟 `http://localhost:8000/12345.html` 進行遊戲。
 
 ## 細則
 1 勝過 5 <br> 
