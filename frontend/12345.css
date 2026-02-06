@@ -1,68 +1,153 @@
-/* CSS code */
-.wrap{
-  width: 80%;
-  margin: auto;
+:root {
+  color-scheme: light;
+  --bg: #f4f6fb;
+  --panel: #ffffff;
+  --line: #d8ddea;
+  --text: #1d2333;
+  --muted: #677089;
+  --primary: #2f6df6;
+  --win: #16a34a;
+  --lose: #dc2626;
+  --draw: #ca8a04;
 }
 
-.player,
-.player1,
-.player2,
-.center {
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Noto Sans TC", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.container {
+  width: min(980px, 92vw);
+  margin: 24px auto 40px;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: repeat(4, 1fr);
-  width: 500px;
-  height: 150px;
-  margin: 10px auto;
-  text-align: center;
+  gap: 16px;
 }
 
-.card {
-  width: 100px;
-  height: 140px;
-  border: 1px solid black;
-  margin: auto;
-  float: left;
+h1,
+h2,
+h3,
+p {
+  margin: 0;
 }
 
-
-.button {
-  background-color: #4CAF50;
-  border: none;
-  color: white;
-  padding: 10px 30px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  margin: auto;
-  cursor: pointer;
+.subtitle {
+  color: var(--muted);
+  margin-top: 8px;
 }
 
-.tablestyle {
-  width: 60%;
-  margin: 10px auto;
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(19, 33, 68, 0.05);
 }
 
 table {
-  border-spacing: 0;
   width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
 }
 
-tr {
+th,
+td {
   text-align: center;
+  border: 1px solid var(--line);
+  padding: 8px;
 }
+
 th {
-  padding: 10px;
+  background: #eef2ff;
 }
-table tbody tr:nth-child(odd){
-  background-color: #eee
+
+.board-row {
+  margin-top: 12px;
 }
-table thead {
-  background-color: blue;
-  color: white;
+
+.slots {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(60px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
 }
-table thead th:first-child {
-  border-radius: 5px 0 0 0;
-  border: 1px solid blue;
+
+.slot {
+  border: 2px dashed #c7d2fe;
+  border-radius: 10px;
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8faff;
+}
+
+.hand {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(60px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.card {
+  border: 1px solid #9aa7c7;
+  border-radius: 10px;
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #ffffff, #f3f6ff);
+  font-size: 28px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+.card:active {
+  transform: scale(0.98);
+}
+
+.card.dragging {
+  opacity: 0.45;
+}
+
+.hint {
+  margin-top: 12px;
+  color: var(--muted);
+}
+
+.final-result {
+  margin-top: 10px;
+  font-weight: 700;
+}
+
+.final-result.win {
+  color: var(--win);
+}
+
+.final-result.lose {
+  color: var(--lose);
+}
+
+.final-result.draw {
+  color: var(--draw);
+}
+
+.actions {
+  margin-top: 12px;
+}
+
+.button {
+  background: var(--primary);
+  border: none;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
 }

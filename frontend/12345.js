@@ -1,155 +1,176 @@
-const allowDrop = (event) => {
+const TOTAL_ROUNDS = 5;
+
+const state = {
+  cpuDeck: [],
+  playerDeck: [1, 2, 3, 4, 5],
+  cpuHistory: [],
+  playerHistory: [],
+  scoreboard: {
+    cpu: { win: 0, lose: 0, draw: 0 },
+    player: { win: 0, lose: 0, draw: 0 },
+  },
+};
+
+const cpuArea = document.getElementById("cpu-area");
+const playerArea = document.getElementById("player-area");
+const playerHand = document.getElementById("player-hand");
+const roundTableBody = document.querySelector("#round-table tbody");
+const finalResult = document.getElementById("final-result");
+const hint = document.getElementById("hint");
+
+const shuffle = (list) => {
+  const arr = [...list];
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+};
+
+const compareCards = (cpu, player) => {
+  if (cpu === player) return "DRAW";
+  if ((player === 1 && cpu === 5) || (player === 2 && cpu === 4)) return "WIN";
+  if ((cpu === 1 && player === 5) || (cpu === 2 && player === 4)) return "LOSE";
+  return player > cpu ? "WIN" : "LOSE";
+};
+
+const createSlot = () => {
+  const slot = document.createElement("div");
+  slot.className = "slot";
+  return slot;
+};
+
+const buildSlots = () => {
+  cpuArea.innerHTML = "";
+  playerArea.innerHTML = "";
+  for (let i = 0; i < TOTAL_ROUNDS; i += 1) {
+    cpuArea.appendChild(createSlot());
+    playerArea.appendChild(createSlot());
+  }
+};
+
+const updateScoreboardView = () => {
+  ["win", "lose", "draw"].forEach((result) => {
+    document.getElementById(`cpu-${result}`).textContent = state.scoreboard.cpu[result];
+    document.getElementById(`player-${result}`).textContent = state.scoreboard.player[result];
+  });
+};
+
+const renderPlayerHand = () => {
+  playerHand.innerHTML = "";
+  state.playerDeck.forEach((value) => {
+    const card = document.createElement("button");
+    card.className = "card";
+    card.type = "button";
+    card.draggable = true;
+    card.dataset.value = String(value);
+    card.textContent = value;
+
+    card.addEventListener("click", () => playRound(value));
+    card.addEventListener("dragstart", (event) => {
+      card.classList.add("dragging");
+      event.dataTransfer.setData("text/plain", String(value));
+    });
+    card.addEventListener("dragend", () => card.classList.remove("dragging"));
+
+    playerHand.appendChild(card);
+  });
+};
+
+const pushCardToArea = (area, value, roundIndex) => {
+  const slots = area.querySelectorAll(".slot");
+  slots[roundIndex].textContent = value;
+};
+
+const renderRoundRow = (roundIndex, cpuValue, playerValue, result) => {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${roundIndex + 1}</td>
+    <td>${cpuValue}</td>
+    <td>${playerValue}</td>
+    <td>${result}</td>
+  `;
+  roundTableBody.appendChild(tr);
+};
+
+const finalizeGame = () => {
+  const wins = state.playerHistory.filter((_, i) => compareCards(state.cpuHistory[i], state.playerHistory[i]) === "WIN").length;
+  const loses = state.playerHistory.filter((_, i) => compareCards(state.cpuHistory[i], state.playerHistory[i]) === "LOSE").length;
+
+  if (wins > loses) {
+    finalResult.textContent = `本局結束：玩家勝利（${wins}:${loses}）`;
+    finalResult.className = "final-result win";
+    state.scoreboard.player.win += 1;
+    state.scoreboard.cpu.lose += 1;
+  } else if (wins < loses) {
+    finalResult.textContent = `本局結束：電腦勝利（${loses}:${wins}）`;
+    finalResult.className = "final-result lose";
+    state.scoreboard.player.lose += 1;
+    state.scoreboard.cpu.win += 1;
+  } else {
+    finalResult.textContent = `本局結束：平手（${wins}:${loses}）`;
+    finalResult.className = "final-result draw";
+    state.scoreboard.player.draw += 1;
+    state.scoreboard.cpu.draw += 1;
+  }
+
+  hint.textContent = "本局已完成，點擊 Restart 開始下一局。";
+  updateScoreboardView();
+};
+
+const playRound = (playerValue) => {
+  if (!state.playerDeck.includes(playerValue) || state.playerHistory.length >= TOTAL_ROUNDS) {
+    return;
+  }
+
+  const cpuValue = state.cpuDeck[state.playerHistory.length];
+  const roundIndex = state.playerHistory.length;
+
+  state.playerHistory.push(playerValue);
+  state.cpuHistory.push(cpuValue);
+  state.playerDeck = state.playerDeck.filter((v) => v !== playerValue);
+
+  pushCardToArea(cpuArea, cpuValue, roundIndex);
+  pushCardToArea(playerArea, playerValue, roundIndex);
+
+  const roundResult = compareCards(cpuValue, playerValue);
+  renderRoundRow(roundIndex, cpuValue, playerValue, roundResult);
+
+  renderPlayerHand();
+
+  if (state.playerHistory.length === TOTAL_ROUNDS) {
+    finalizeGame();
+  } else {
+    hint.textContent = `已完成第 ${state.playerHistory.length} 回合，請繼續出牌。`;
+  }
+};
+
+const resetMatch = () => {
+  state.cpuDeck = shuffle([1, 2, 3, 4, 5]);
+  state.playerDeck = [1, 2, 3, 4, 5];
+  state.cpuHistory = [];
+  state.playerHistory = [];
+
+  roundTableBody.innerHTML = "";
+  finalResult.textContent = "尚未完成本局。";
+  finalResult.className = "final-result";
+  hint.textContent = "拖曳或點擊下方玩家卡牌開始出牌。";
+
+  buildSlots();
+  renderPlayerHand();
+};
+
+playerArea.addEventListener("dragover", (event) => {
   event.preventDefault();
-};
-
-const drag = (event) => {
-  event.dataTransfer.setData("text", event.target.id);
-};
-
-var array = [0, 1, 2, 3, 4]
-function getRandomValue() {
-  if (array.length === 0) {
-    return null;
-  }
-  var randomIndex = Math.floor(Math.random() * array.length);
-  var randomValue = array[randomIndex];
-  array.splice(randomIndex, 1);
-  return randomValue;
-}
-
-const player1Turn = () => {
-  const player1Cards = document.querySelectorAll("#player1 .card");
-  const areaCards = document.querySelectorAll("#center-top .card");
-  const random_card = getRandomValue();
-  const src = player1Cards[random_card].firstElementChild
-  for (let j = 0; j < areaCards.length; j++) {
-    if (!areaCards[j].hasChildNodes()) {
-      areaCards[j].appendChild(src);
-      src.style.display = "block";
-      playHistory.player1History.push(src.id);
-      break;
-    }
-  }
-};
-
-let playHistory = {
-  player1History: [],
-  player2History: []
-};
-
-const drop = (event) => {
-  event.preventDefault();
-  const data = event.dataTransfer.getData("text");
-  const src = document.getElementById(data);
-  const srcParent = src.closest(".player");
-  const tgt = event.currentTarget;
-
-  if (tgt.id === "center-top" || tgt.id === "center-bottom") {
-    if (srcParent.id === "player2" && tgt.id === "center-bottom") {
-      const areaCards = document.querySelectorAll("#center-bottom .card");
-      for (let i = 0; i < areaCards.length; i++) {
-        if (!areaCards[i].hasChildNodes()) {
-          areaCards[i].appendChild(src);
-          src.style.display = "block";
-          playHistory.player2History.push(src.id);
-          player1Turn();
-          console.log(playHistory)
-          if (playHistory.player2History.length === 5) {
-            player2Finish();
-          }
-          break;
-        }
-      }
-    }
-  }
-};
-
-//處理點擊卡牌事件
-const handleClick = (event) => {
-  const src = event.target;
-  const srcParent = src.closest(".player");
-  const areaCards = document.querySelectorAll("#center-bottom .card");
-
-  for (let i = 0; i < areaCards.length; i++) {
-    if (!areaCards[i].hasChildNodes()) {
-      areaCards[i].appendChild(src);
-      src.style.display = "block";
-      playHistory.player2History.push(src.id);
-      player1Turn();
-      console.log(playHistory)
-      if (playHistory.player2History.length === 5) {
-        player2Finish();
-      }
-      break;
-    }
-  }
-};
-
-// 重設遊戲
-const resetButton = document.getElementById("resetButton");
-resetButton.addEventListener("click", () => {
-  console.log("翻桌(╯‵□′)╯︵┻━┻")
-  playHistory = { player1History: [], player2History: [] };  //重設變數
-  array = [0, 1, 2, 3, 4];  //重設變數
-  const player1Cards = document.querySelectorAll("#player1 .card");
-  const player2Cards = document.querySelectorAll("#player2 .card");
-  const areaCards = document.querySelectorAll(".center .card");
-  // 將所有卡牌回到初始位置
-  for (let i = 0; i < player1Cards.length; i++) {
-    if (player1Cards[i].hasChildNodes()) {
-      player1Cards[i].appendChild(document.getElementById("p1_drag" + (i + 1)));
-    }
-  }
-  for (let i = 0; i < player2Cards.length; i++) {
-    if (player2Cards[i].hasChildNodes()) {
-      player2Cards[i].appendChild(document.getElementById("p2_drag" + (i + 1)));
-    }
-  }
-  for (let i = 0; i < areaCards.length; i++) {
-    if (areaCards[i].hasChildNodes()) {
-      areaCards[i].removeChild(areaCards[i].firstElementChild);
-    }
-  }
 });
 
+playerArea.addEventListener("drop", (event) => {
+  event.preventDefault();
+  const value = Number(event.dataTransfer.getData("text/plain"));
+  playRound(value);
+});
 
-const player2Finish = () => {
-  // player2 完成牌局的相關操作
-  // 向後端請求結果
-  console.log("後端做事")
-  fetch('http://localhost:5000/game_result', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(playHistory)
-  })
+document.getElementById("restart-btn").addEventListener("click", resetMatch);
 
-    .then(response => response.json())
-    .then(result => {
-      // 處理後端回傳的結果
-      console.log("Success:", JSON.stringify(result));
-      if (result === 'Player 1 wins') {
-        updateScore('player1', 'win');
-        updateScore('player2', 'lose');
-      }else if (result === 'Player 2 wins'){
-        updateScore('player1', 'lose');
-        updateScore('player2', 'win');
-      }else{
-        updateScore('player1', 'draw');
-        updateScore('player2', 'draw');
-      }})
-    .catch(error => {
-      console.error("Error:", error);
-    });
-};
-
-const updateScore = (player, result) => {
-  if (result === 'win') {
-    document.getElementById(`${player}-win`).textContent = parseInt(document.getElementById(`${player}-win`).textContent) + 1;
-  } else if (result === 'lose') {
-    document.getElementById(`${player}-lose`).textContent = parseInt(document.getElementById(`${player}-lose`).textContent) + 1;
-  } else if (result === 'draw') {
-    document.getElementById(`${player}-draw`).textContent = parseInt(document.getElementById(`${player}-draw`).textContent) + 1;
-  }
-};
+resetMatch();
+updateScoreboardView();

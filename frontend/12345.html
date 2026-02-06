@@ -1,110 +1,86 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" type="text/css" href="12345.css">
-  <!-- rel 屬性表示資源類型，對應的值為 "stylesheet"，表示這是一個樣式表 -->
-  <!-- type 屬性表示檔案類型，對應的值為 "text/css"，表示這是一個 CSS 檔案 -->
-  <!-- href 屬性表示檔案位置，對應的值是 CSS 檔案的絕對或相對路徑。 -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>1-2-3-4-5 網頁遊戲</title>
+  <link rel="stylesheet" type="text/css" href="12345.css" />
 </head>
 
-<!-- HTML code -->
 <body>
-  <div class="tablestyle">
-    <table id="scoreboard">
-      <tr>
-        <th>玩家</th>
-        <th>勝</th>
-        <th>負</th>
-        <th>和</th>
-      </tr>
-      <tr>
-        <td>電腦</td>
-        <td id="player1-win">0</td>
-        <td id="player1-lose">0</td>
-        <td id="player1-draw">0</td>
-      </tr>
-      <tr>
-        <td>玩家</td>
-        <td id="player2-win">0</td>
-        <td id="player2-lose">0</td>
-        <td id="player2-draw">0</td>
-      </tr>
-    </table>
-  </div>
+  <main class="container">
+    <header>
+      <h1>1-2-3-4-5 遊戲（基本規則）</h1>
+      <p class="subtitle">規則：數字大者勝，特殊剋制為 <strong>1 勝 5、2 勝 4</strong>。雙方各出 5 張且不可重複。</p>
+    </header>
 
-<!-- 玩家1(電腦)卡牌 -->
-  <div class="wrap">
-    <div id="player1" class="player">
-      <div class="card" id="p1_card1" ondrop="drop(event)" ondragover="allowDrop(event)">
-        <img id="p1_drag1" src="../public/card/p2_card_1_diamond.png" width="100%" draggable="true"
-          ondragstart="drag(event)">
-      </div>
-      <div class="card" id="p1_card2" ondrop="drop(event)" ondragover="allowDrop(event)">
-        <img id="p1_drag2" src="../public/card/p2_card_2_diamond.png" width="100%" draggable="true"
-          ondragstart="drag(event)">
-      </div>
-      <div class="card" id="p1_card3" ondrop="drop(event)" ondragover="allowDrop(event)">
-        <img id="p1_drag3" src="../public/card/p2_card_3_diamond.png" width="100%" draggable="true"
-          ondragstart="drag(event)">
-      </div>
-      <div class="card" id="p1_card4" ondrop="drop(event)" ondragover="allowDrop(event)">
-        <img id="p1_drag4" src="../public/card/p2_card_4_diamond.png" width="100%" draggable="true"
-          ondragstart="drag(event)">
-      </div>
-      <div class="card" id="p1_card5" ondrop="drop(event)" ondragover="allowDrop(event)">
-        <img id="p1_drag5" src="../public/card/p2_card_5_diamond.png" width="100%" draggable="true"
-          ondragstart="drag(event)">
-      </div>
-    </div>
-    <div id="center-top" class="center" ondrop="drop(event)" ondragover="allowDrop(event)">
-      <!-- Center Top -->
-      <div class="card" id="p1_area1" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-      <div class="card" id="p1_area2" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-      <div class="card" id="p1_area3" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-      <div class="card" id="p1_area4" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-      <div class="card" id="p1_area5" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-    </div>
+    <section class="panel score-panel">
+      <h2>總比分</h2>
+      <table id="scoreboard">
+        <thead>
+          <tr>
+            <th>角色</th>
+            <th>勝</th>
+            <th>負</th>
+            <th>和</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>電腦</td>
+            <td id="cpu-win">0</td>
+            <td id="cpu-lose">0</td>
+            <td id="cpu-draw">0</td>
+          </tr>
+          <tr>
+            <td>玩家</td>
+            <td id="player-win">0</td>
+            <td id="player-lose">0</td>
+            <td id="player-draw">0</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
 
-    <div align="center">
-      <button id="resetButton" class="button">Restart</button>
-    </div>
+    <section class="panel board-panel">
+      <h2>本局出牌區</h2>
+      <div class="board-row">
+        <h3>電腦</h3>
+        <div id="cpu-area" class="slots"></div>
+      </div>
+      <div class="board-row">
+        <h3>玩家</h3>
+        <div id="player-area" class="slots drop-target" aria-label="玩家置牌區"></div>
+      </div>
+      <p id="hint" class="hint">拖曳或點擊下方玩家卡牌開始出牌。</p>
+    </section>
 
-    <div id="center-bottom" class="center" ondrop="drop(event)" ondragover="allowDrop(event)">
-      <!-- Center Bottom -->
-      <div class="card" id="p2_area1" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-      <div class="card" id="p2_area2" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-      <div class="card" id="p2_area3" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-      <div class="card" id="p2_area4" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-      <div class="card" id="p2_area5" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-    </div>
-    <!-- 玩家2卡牌 -->
-    <div id="player2" class="player">
-      <div class="card" id="p2_card1" ondrop="drop(event)" ondragover="allowDrop(event)">
-        <img id="p2_drag1" src="../public/card/p1_card_1_spades.png" width="100%" draggable="true"
-          ondragstart="drag(event)" onclick="handleClick(event)">
+    <section class="panel history-panel">
+      <h2>本局結果</h2>
+      <table id="round-table">
+        <thead>
+          <tr>
+            <th>回合</th>
+            <th>電腦</th>
+            <th>玩家</th>
+            <th>結果</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p id="final-result" class="final-result">尚未完成本局。</p>
+    </section>
+
+    <section class="panel hand-panel">
+      <h2>玩家手牌</h2>
+      <div id="player-hand" class="hand"></div>
+      <div class="actions">
+        <button id="restart-btn" class="button">Restart</button>
       </div>
-      <div class="card" id="p2_card2" ondrop="drop(event)" ondragover="allowDrop(event)">
-        <img id="p2_drag2" src="../public/card/p1_card_2_spades.png" width="100%" draggable="true"
-          ondragstart="drag(event)" onclick="handleClick(event)">
-      </div>
-      <div class="card" id="p2_card3" ondrop="drop(event)" ondragover="allowDrop(event)">
-        <img id="p2_drag3" src="../public/card/p1_card_3_spades.png" width="100%" draggable="true"
-          ondragstart="drag(event)" onclick="handleClick(event)">
-      </div>
-      <div class="card" id="p2_card4" ondrop="drop(event)" ondragover="allowDrop(event)">
-        <img id="p2_drag4" src="../public/card/p1_card_4_spades.png" width="100%" draggable="true"
-          ondragstart="drag(event)" onclick="handleClick(event)">
-      </div>
-      <div class="card" id="p2_card5" ondrop="drop(event)" ondragover="allowDrop(event)">
-        <img id="p2_drag5" src="../public/card/p1_card_5_spades.png" width="100%" draggable="true"
-          ondragstart="drag(event)" onclick="handleClick(event)">
-      </div>
-      <!-- 其他卡牌 -->
-    </div>
-    
-  </div>
+    </section>
+  </main>
+
   <script src="12345.js"></script>
 </body>
 
