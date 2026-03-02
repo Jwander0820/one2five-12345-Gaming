@@ -1,5 +1,10 @@
 const TOTAL_ROUNDS = 5;
 
+const integrations = {
+  onRoundComplete: (_payload) => {},
+  onMatchComplete: (_payload) => {},
+};
+
 const state = {
   cpuDeck: [],
   playerDeck: [1, 2, 3, 4, 5],
@@ -116,6 +121,12 @@ const finalizeGame = () => {
 
   hint.textContent = "本局已完成，點擊 Restart 開始下一局。";
   updateScoreboardView();
+
+  integrations.onMatchComplete({
+    cpuHistory: [...state.cpuHistory],
+    playerHistory: [...state.playerHistory],
+    scoreboard: JSON.parse(JSON.stringify(state.scoreboard)),
+  });
 };
 
 const playRound = (playerValue) => {
@@ -135,6 +146,13 @@ const playRound = (playerValue) => {
 
   const roundResult = compareCards(cpuValue, playerValue);
   renderRoundRow(roundIndex, cpuValue, playerValue, roundResult);
+
+  integrations.onRoundComplete({
+    round: roundIndex + 1,
+    cpu: cpuValue,
+    player: playerValue,
+    result: roundResult,
+  });
 
   renderPlayerHand();
 
