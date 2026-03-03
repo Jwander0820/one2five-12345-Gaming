@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>1-2-3-4-5 網頁遊戲</title>
+  <link rel="stylesheet" type="text/css" href="12345.css" />
+</head>
+
+<body>
+  <main class="layout">
+    <section class="game-shell panel">
+      <header class="game-header">
+        <h1>1-2-3-4-5 遊戲（基本規則）</h1>
+        <p class="subtitle">大數字勝，例外：<strong>1 勝 5、2 勝 4</strong>。每張牌只能出一次。</p>
+      </header>
+
+      <section class="battlefield">
+        <h2>電腦手牌</h2>
+        <div id="cpu-area" class="slots"></div>
+
+        <h2 class="mid-title">出牌區</h2>
+        <div id="player-area" class="slots drop-target" aria-label="玩家置牌區"></div>
+
+        <h2>玩家手牌</h2>
+        <div id="player-hand" class="hand"></div>
+      </section>
+
+      <footer class="action-row">
+        <p id="hint" class="hint">拖曳或點擊下方玩家卡牌開始出牌。</p>
+        <button id="restart-btn" class="button" type="button">Restart</button>
+      </footer>
+    </section>
+
+    <aside class="side-panels">
+      <details class="panel fold" open>
+        <summary>遊戲方法與提示</summary>
+        <ol>
+          <li>每回合從玩家手牌出 1 張。</li>
+          <li>共 5 回合，系統會顯示 WIN / LOSE / DRAW。</li>
+          <li>按 Restart 可快速再開一局。</li>
+        </ol>
+      </details>
+
+      <details class="panel fold" open>
+        <summary>本局記分板</summary>
+        <table id="round-table">
+          <thead>
+            <tr>
+              <th>回合</th>
+              <th>電腦</th>
+              <th>玩家</th>
+              <th>結果</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <p id="final-result" class="final-result">尚未完成本局。</p>
+      </details>
+
+      <details class="panel fold" open>
+        <summary>總比分</summary>
+        <table id="scoreboard">
+          <thead>
+            <tr>
+              <th>角色</th>
+              <th>勝</th>
+              <th>負</th>
+              <th>和</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>電腦</td>
+              <td id="cpu-win">0</td>
+              <td id="cpu-lose">0</td>
+              <td id="cpu-draw">0</td>
+            </tr>
+            <tr>
+              <td>玩家</td>
+              <td id="player-win">0</td>
+              <td id="player-lose">0</td>
+              <td id="player-draw">0</td>
+            </tr>
+          </tbody>
+        </table>
+      </details>
+    </aside>
+  </main>
+
+  <script src="12345.js"></script>
+</body>
+
+</html>
