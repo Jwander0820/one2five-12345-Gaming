@@ -56,6 +56,22 @@ body {
   color: var(--muted);
 }
 
+.mode-switch {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.button.mode {
+  background: #dbe6ff;
+  color: #294486;
+}
+
+.button.mode.active {
+  background: var(--primary);
+  color: #fff;
+}
+
 .battlefield {
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -115,6 +131,39 @@ body {
   grid-template-columns: 1fr auto;
   gap: 10px;
   align-items: center;
+}
+
+.advanced-controls {
+  margin-top: 6px;
+  padding: 10px 12px;
+}
+
+.advanced-controls h3 {
+  margin: 0 0 8px;
+}
+
+.advanced-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.advanced-grid label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.advanced-grid select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.hidden {
+  display: none;
 }
 
 .hint {
@@ -240,6 +289,10 @@ th {
   }
 
   .action-row {
+    grid-template-columns: 1fr;
+  }
+
+  .advanced-grid {
     grid-template-columns: 1fr;
   }
 

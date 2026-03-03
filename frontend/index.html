@@ -12,8 +12,12 @@
   <main class="layout">
     <section class="game-shell panel">
       <header class="game-header">
-        <h1>1-2-3-4-5 遊戲（基本規則）</h1>
-        <p class="subtitle">大數字勝，例外：<strong>1 勝 5、2 勝 4</strong>。每張牌只能出一次。</p>
+        <h1 id="game-title">1-2-3-4-5 遊戲（基本規則）</h1>
+        <p id="game-subtitle" class="subtitle">大數字勝，例外：<strong>1 勝 5、2 勝 4</strong>。每張牌只能出一次。</p>
+        <div class="mode-switch" role="group" aria-label="模式切換">
+          <button id="mode-basic" class="button mode active" type="button">普通模式</button>
+          <button id="mode-advanced" class="button mode" type="button">進階模式</button>
+        </div>
       </header>
 
       <section class="battlefield">
@@ -31,12 +35,34 @@
         <p id="hint" class="hint">拖曳或點擊下方玩家卡牌開始出牌。</p>
         <button id="restart-btn" class="button" type="button">Restart</button>
       </footer>
+
+      <section id="advanced-controls" class="panel advanced-controls hidden" aria-live="polite">
+        <h3>進階功能卡操作</h3>
+        <div class="advanced-grid">
+          <div>
+            <label for="player-card-select">玩家功能卡</label>
+            <select id="player-card-select"></select>
+          </div>
+          <div>
+            <label for="player-pos-select">放置位置</label>
+            <select id="player-pos-select">
+              <option value="1">位置 1</option>
+              <option value="2">位置 2</option>
+              <option value="3">位置 3</option>
+              <option value="4">位置 4</option>
+              <option value="5">位置 5</option>
+            </select>
+          </div>
+          <button id="resolve-advanced-btn" class="button" type="button">結算本大局</button>
+        </div>
+        <p id="advanced-status" class="hint"></p>
+      </section>
     </section>
 
     <aside class="side-panels">
       <details class="panel fold" open>
         <summary>遊戲方法與提示</summary>
-        <ol>
+        <ol id="rules-list">
           <li>每回合從玩家手牌出 1 張。</li>
           <li>共 5 回合，系統會顯示 WIN / LOSE / DRAW。</li>
           <li>按 Restart 可快速再開一局。</li>
