@@ -9,87 +9,84 @@
 </head>
 
 <body>
-  <main class="container">
-    <header>
-      <h1>1-2-3-4-5 遊戲（基本規則）</h1>
-      <p class="subtitle">規則：數字大者勝，特殊剋制為 <strong>1 勝 5、2 勝 4</strong>。雙方各出 5 張且不可重複。</p>
-    </header>
+  <main class="layout">
+    <section class="game-shell panel">
+      <header class="game-header">
+        <h1>1-2-3-4-5 遊戲（基本規則）</h1>
+        <p class="subtitle">大數字勝，例外：<strong>1 勝 5、2 勝 4</strong>。每張牌只能出一次。</p>
+      </header>
 
-
-    <section class="panel guide-panel">
-      <h2>新手快速上手</h2>
-      <ol>
-        <li>在「玩家手牌」點擊（或拖曳）一張數字卡。</li>
-        <li>每回合電腦會同步出一張牌，系統立即判定 WIN / LOSE / DRAW。</li>
-        <li>五回合結束後顯示本局結果，按 <strong>Restart</strong> 進入下一局。</li>
-      </ol>
-      <p class="note">此版本為 <strong>純前端靜態版</strong>（可直接部署在 GitHub Pages）。未來可在同一份程式加上 API 串接，擴充資料庫、即時對戰、AI 對弈。</p>
-    </section>
-
-    <section class="panel score-panel">
-      <h2>總比分</h2>
-      <table id="scoreboard">
-        <thead>
-          <tr>
-            <th>角色</th>
-            <th>勝</th>
-            <th>負</th>
-            <th>和</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>電腦</td>
-            <td id="cpu-win">0</td>
-            <td id="cpu-lose">0</td>
-            <td id="cpu-draw">0</td>
-          </tr>
-          <tr>
-            <td>玩家</td>
-            <td id="player-win">0</td>
-            <td id="player-lose">0</td>
-            <td id="player-draw">0</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <section class="panel board-panel">
-      <h2>本局出牌區</h2>
-      <div class="board-row">
-        <h3>電腦</h3>
+      <section class="battlefield">
+        <h2>電腦手牌</h2>
         <div id="cpu-area" class="slots"></div>
-      </div>
-      <div class="board-row">
-        <h3>玩家</h3>
+
+        <h2 class="mid-title">出牌區</h2>
         <div id="player-area" class="slots drop-target" aria-label="玩家置牌區"></div>
-      </div>
-      <p id="hint" class="hint">拖曳或點擊下方玩家卡牌開始出牌。</p>
+
+        <h2>玩家手牌</h2>
+        <div id="player-hand" class="hand"></div>
+      </section>
+
+      <footer class="action-row">
+        <p id="hint" class="hint">拖曳或點擊下方玩家卡牌開始出牌。</p>
+        <button id="restart-btn" class="button" type="button">Restart</button>
+      </footer>
     </section>
 
-    <section class="panel history-panel">
-      <h2>本局結果</h2>
-      <table id="round-table">
-        <thead>
-          <tr>
-            <th>回合</th>
-            <th>電腦</th>
-            <th>玩家</th>
-            <th>結果</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <p id="final-result" class="final-result">尚未完成本局。</p>
-    </section>
+    <aside class="side-panels">
+      <details class="panel fold" open>
+        <summary>遊戲方法與提示</summary>
+        <ol>
+          <li>每回合從玩家手牌出 1 張。</li>
+          <li>共 5 回合，系統會顯示 WIN / LOSE / DRAW。</li>
+          <li>按 Restart 可快速再開一局。</li>
+        </ol>
+      </details>
 
-    <section class="panel hand-panel">
-      <h2>玩家手牌</h2>
-      <div id="player-hand" class="hand"></div>
-      <div class="actions">
-        <button id="restart-btn" class="button">Restart</button>
-      </div>
-    </section>
+      <details class="panel fold" open>
+        <summary>本局記分板</summary>
+        <table id="round-table">
+          <thead>
+            <tr>
+              <th>回合</th>
+              <th>電腦</th>
+              <th>玩家</th>
+              <th>結果</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <p id="final-result" class="final-result">尚未完成本局。</p>
+      </details>
+
+      <details class="panel fold" open>
+        <summary>總比分</summary>
+        <table id="scoreboard">
+          <thead>
+            <tr>
+              <th>角色</th>
+              <th>勝</th>
+              <th>負</th>
+              <th>和</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>電腦</td>
+              <td id="cpu-win">0</td>
+              <td id="cpu-lose">0</td>
+              <td id="cpu-draw">0</td>
+            </tr>
+            <tr>
+              <td>玩家</td>
+              <td id="player-win">0</td>
+              <td id="player-lose">0</td>
+              <td id="player-draw">0</td>
+            </tr>
+          </tbody>
+        </table>
+      </details>
+    </aside>
   </main>
 
   <script src="12345.js"></script>
