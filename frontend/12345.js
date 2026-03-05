@@ -21,11 +21,15 @@ const state = {
     minorScore: { cpu: 0, player: 0, draw: 0 },
     cpuCards: [...CARD_LABELS],
     playerCards: [...CARD_LABELS],
+    awaitingNext: false,
+    matchFinished: false,
   },
 };
 
 const cpuArea = document.getElementById("cpu-area");
 const playerArea = document.getElementById("player-area");
+const cpuFuncRow = document.getElementById("cpu-func-row");
+const playerFuncRow = document.getElementById("player-func-row");
 const playerHand = document.getElementById("player-hand");
 const roundTableBody = document.querySelector("#round-table tbody");
 const finalResult = document.getElementById("final-result");
@@ -44,6 +48,7 @@ const minorScorePill = document.getElementById("minor-score-pill");
 const playerCardSelect = document.getElementById("player-card-select");
 const playerPosSelect = document.getElementById("player-pos-select");
 const resolveAdvancedBtn = document.getElementById("resolve-advanced-btn");
+const nextMajorBtn = document.getElementById("next-major-btn");
 
 const modeBasicBtn = document.getElementById("mode-basic");
 const modeAdvancedBtn = document.getElementById("mode-advanced");
@@ -51,6 +56,8 @@ const modeAdvancedBtn = document.getElementById("mode-advanced");
 const stepChooseMode = document.getElementById("step-choose-mode");
 const stepPlayFive = document.getElementById("step-play-five");
 const stepResolveCard = document.getElementById("step-resolve-card");
+
+const cardText = (card) => (card === "JK" ? "JOKER" : card);
 
 const shuffle = (list) => {
   const arr = [...list];
@@ -91,10 +98,33 @@ const applyJoker = (playerDeck, cpuDeck) => {
   cpuDeck.splice(0, cpuDeck.length, ...playerCopy);
 };
 
-const createSlot = () => {
+const createSlot = (className = "slot") => {
   const slot = document.createElement("div");
-  slot.className = "slot";
+  slot.className = className;
   return slot;
+};
+
+const buildFunctionRow = () => {
+  cpuFuncRow.innerHTML = "";
+  playerFuncRow.innerHTML = "";
+  for (let i = 0; i < TOTAL_ROUNDS; i += 1) {
+    cpuFuncRow.appendChild(createSlot("func-slot"));
+    playerFuncRow.appendChild(createSlot("func-slot"));
+  }
+};
+
+const clearFunctionPlacement = () => {
+  buildFunctionRow();
+};
+
+const renderFunctionPlacement = (cpuCard, cpuPos, playerCard, playerPos) => {
+  clearFunctionPlacement();
+  const cpuSlots = cpuFuncRow.querySelectorAll(".func-slot");
+  const playerSlots = playerFuncRow.querySelectorAll(".func-slot");
+  cpuSlots[cpuPos - 1].textContent = cardText(cpuCard);
+  cpuSlots[cpuPos - 1].classList.add("active");
+  playerSlots[playerPos - 1].textContent = cardText(playerCard);
+  playerSlots[playerPos - 1].classList.add("active");
 };
 
 const buildSlots = () => {
@@ -103,6 +133,15 @@ const buildSlots = () => {
   for (let i = 0; i < TOTAL_ROUNDS; i += 1) {
     cpuArea.appendChild(createSlot());
     playerArea.appendChild(createSlot());
+  }
+};
+
+const renderBoardToArea = (cpuBoard, playerBoard) => {
+  const cpuSlots = cpuArea.querySelectorAll(".slot");
+  const playerSlots = playerArea.querySelectorAll(".slot");
+  for (let i = 0; i < TOTAL_ROUNDS; i += 1) {
+    cpuSlots[i].textContent = cpuBoard[i];
+    playerSlots[i].textContent = playerBoard[i];
   }
 };
 
@@ -119,7 +158,10 @@ const updateGuide = () => {
   if (state.mode === MODE.BASIC) {
     setStepState(stepResolveCard, { active: false, done: true });
   } else {
-    setStepState(stepResolveCard, { active: finishedFive, done: !finishedFive });
+    setStepState(stepResolveCard, {
+      active: finishedFive && !state.advanced.awaitingNext,
+      done: state.advanced.awaitingNext || !finishedFive,
+    });
   }
 };
 
@@ -176,7 +218,9 @@ const resetRound = () => {
   state.playerDeck = [1, 2, 3, 4, 5];
   state.cpuHistory = [];
   state.playerHistory = [];
+  state.advanced.awaitingNext = false;
   buildSlots();
+  clearFunctionPlacement();
   renderPlayerHand();
   updateRoundProgress();
   updateGuide();
@@ -187,11 +231,15 @@ const renderAdvancedCardOptions = () => {
   state.advanced.playerCards.forEach((card) => {
     const option = document.createElement("option");
     option.value = card;
-    option.textContent = card === "JK" ? "JOKER" : card;
+    option.textContent = cardText(card);
     playerCardSelect.appendChild(option);
   });
 
-  resolveAdvancedBtn.disabled = state.playerHistory.length !== TOTAL_ROUNDS || state.advanced.playerCards.length === 0;
+  resolveAdvancedBtn.disabled =
+    state.playerHistory.length !== TOTAL_ROUNDS ||
+    state.advanced.playerCards.length === 0 ||
+    state.advanced.awaitingNext ||
+    state.advanced.matchFinished;
 };
 
 const updateAdvancedDashboard = () => {
@@ -202,7 +250,7 @@ const updateAdvancedDashboard = () => {
   majorScorePill.textContent = `大局比數 玩家 ${major.player} : ${major.cpu} 電腦`;
   minorScorePill.textContent = `小分 玩家 ${minor.player} : ${minor.cpu} 電腦`;
 
-  const label = state.advanced.playerCards.map((card) => (card === "JK" ? "JOKER" : card)).join(", ");
+  const label = state.advanced.playerCards.map((card) => cardText(card)).join(", ");
   cardsLeft.textContent = `剩餘功能卡：${label || "（無）"}`;
 };
 
@@ -221,13 +269,16 @@ const countBoardResult = (cpuBoard, playerBoard) => {
   return { playerWins, cpuWins, draws };
 };
 
-const finalizeAdvancedIfNeeded = () => {
-  const { majorScore, minorScore, majorRound } = state.advanced;
+const advancedShouldEnd = () => {
+  const { majorScore, majorRound } = state.advanced;
   const doneByScore = majorScore.player >= 2 || majorScore.cpu >= 2;
   const tieAfterThree = majorRound >= 3 && majorScore.player === majorScore.cpu;
-  const shouldContinue = !doneByScore && (majorRound < 3 || tieAfterThree) && majorRound < 4;
+  return doneByScore || (majorRound >= 3 && !tieAfterThree) || majorRound === 4;
+};
 
-  if (shouldContinue) return false;
+const finalizeAdvancedMatch = () => {
+  const { majorScore, minorScore } = state.advanced;
+  state.advanced.matchFinished = true;
 
   if (majorScore.player > majorScore.cpu) {
     finalResult.textContent = `進階模式結束：玩家勝利（大局 ${majorScore.player}:${majorScore.cpu}）`;
@@ -256,14 +307,37 @@ const finalizeAdvancedIfNeeded = () => {
     state.scoreboard.cpu.draw += 1;
   }
 
-  hint.textContent = "本局已完成，點擊 Restart 可重新開始。";
-  updateScoreboardView();
+  hint.textContent = "本場進階對局已完成，可點 Restart 重開。";
+  nextMajorBtn.classList.add("hidden");
   resolveAdvancedBtn.disabled = true;
-  return true;
+  updateScoreboardView();
+};
+
+const startNextMajorRound = () => {
+  if (!state.advanced.awaitingNext || state.advanced.matchFinished) return;
+
+  state.advanced.majorRound += 1;
+  state.advanced.awaitingNext = false;
+
+  hint.textContent = `進入第 ${state.advanced.majorRound} 大局：請先打完 5 回合，再擺放功能卡。`;
+  finalResult.textContent = `進階進行中：大局 玩家 ${state.advanced.majorScore.player} : 電腦 ${state.advanced.majorScore.cpu}`;
+  finalResult.className = "final-result";
+
+  nextMajorBtn.classList.add("hidden");
+  resetRound();
+  renderAdvancedCardOptions();
+  updateAdvancedDashboard();
 };
 
 const settleAdvancedMajorRound = () => {
-  if (state.playerHistory.length < TOTAL_ROUNDS || state.advanced.playerCards.length === 0) return;
+  if (
+    state.playerHistory.length < TOTAL_ROUNDS ||
+    state.advanced.playerCards.length === 0 ||
+    state.advanced.awaitingNext ||
+    state.advanced.matchFinished
+  ) {
+    return;
+  }
 
   const playerCard = playerCardSelect.value;
   const playerPos = Number(playerPosSelect.value);
@@ -275,6 +349,8 @@ const settleAdvancedMajorRound = () => {
   const playerBoard = [...state.playerHistory];
   const cpuBoard = [...state.cpuHistory];
 
+  renderFunctionPlacement(cpuCard, cpuPos, playerCard, playerPos);
+
   // 觸發順序：J/Q -> K -> JOKER（玩家先觸發）
   if (playerCard === "J" || playerCard === "Q") applyJQ(playerBoard, playerCard, playerPos);
   if (cpuCard === "J" || cpuCard === "Q") applyJQ(cpuBoard, cpuCard, cpuPos);
@@ -282,6 +358,8 @@ const settleAdvancedMajorRound = () => {
   if (cpuCard === "K") applyK(playerBoard, cpuBoard, cpuPos);
   if (playerCard === "JK") applyJoker(playerBoard, cpuBoard);
   if (cpuCard === "JK") applyJoker(playerBoard, cpuBoard);
+
+  renderBoardToArea(cpuBoard, playerBoard);
 
   const { playerWins, cpuWins, draws } = countBoardResult(cpuBoard, playerBoard);
   state.advanced.minorScore.player += playerWins;
@@ -295,22 +373,31 @@ const settleAdvancedMajorRound = () => {
   state.advanced.playerCards = state.advanced.playerCards.filter((card) => card !== playerCard);
   state.advanced.cpuCards = state.advanced.cpuCards.filter((card) => card !== cpuCard);
 
-  advancedStatus.textContent = `第 ${state.advanced.majorRound} 大局結算：玩家 ${playerCard === "JK" ? "JOKER" : playerCard}(${playerPos})、電腦 ${cpuCard === "JK" ? "JOKER" : cpuCard}(${cpuPos})；小局 ${playerWins}:${cpuWins}（和局 ${draws}）`;
+  state.advanced.awaitingNext = true;
+
+  advancedStatus.textContent = `第 ${state.advanced.majorRound} 大局：玩家 ${cardText(playerCard)} 放在 ${playerPos} 號、電腦 ${cardText(cpuCard)} 放在 ${cpuPos} 號。效果執行後小局 ${playerWins}:${cpuWins}（和局 ${draws}）。`;
+
+  if (playerWins > cpuWins) {
+    finalResult.textContent = `第 ${state.advanced.majorRound} 大局結果：玩家勝 (${playerWins}:${cpuWins})`;
+    finalResult.className = "final-result win";
+  } else if (playerWins < cpuWins) {
+    finalResult.textContent = `第 ${state.advanced.majorRound} 大局結果：電腦勝 (${cpuWins}:${playerWins})`;
+    finalResult.className = "final-result lose";
+  } else {
+    finalResult.textContent = `第 ${state.advanced.majorRound} 大局結果：平手 (${playerWins}:${cpuWins})`;
+    finalResult.className = "final-result draw";
+  }
 
   updateAdvancedDashboard();
   updateGuide();
-
-  const finished = finalizeAdvancedIfNeeded();
-  if (finished) return;
-
-  state.advanced.majorRound += 1;
-  hint.textContent = `進入第 ${state.advanced.majorRound} 大局：請先打完 5 回合再結算功能卡。`;
-  finalResult.textContent = `進階進行中：大局 玩家 ${state.advanced.majorScore.player} : 電腦 ${state.advanced.majorScore.cpu}`;
-  finalResult.className = "final-result";
-
-  resetRound();
   renderAdvancedCardOptions();
-  updateAdvancedDashboard();
+
+  if (advancedShouldEnd()) {
+    finalizeAdvancedMatch();
+  } else {
+    hint.textContent = "此大局結果已展示。請按「下一大局」繼續。";
+    nextMajorBtn.classList.remove("hidden");
+  }
 };
 
 const finalizeBasicGame = () => {
@@ -338,6 +425,7 @@ const finalizeBasicGame = () => {
 };
 
 const playRound = (playerValue) => {
+  if (state.mode === MODE.ADVANCED && (state.advanced.awaitingNext || state.advanced.matchFinished)) return;
   if (!state.playerDeck.includes(playerValue) || state.playerHistory.length >= TOTAL_ROUNDS) return;
 
   const roundIndex = state.playerHistory.length;
@@ -361,7 +449,7 @@ const playRound = (playerValue) => {
     if (state.mode === MODE.BASIC) {
       finalizeBasicGame();
     } else {
-      hint.textContent = "5 回合完成！請選擇功能卡與位置，按「結算本大局」。";
+      hint.textContent = "5 回合完成，請選擇功能卡與位置，執行效果並查看本大局結果。";
       resolveAdvancedBtn.disabled = false;
     }
   } else {
@@ -373,6 +461,7 @@ const resetMatch = () => {
   roundTableBody.innerHTML = "";
   finalResult.textContent = "尚未完成本局。";
   finalResult.className = "final-result";
+  nextMajorBtn.classList.add("hidden");
 
   if (state.mode === MODE.ADVANCED) {
     state.advanced.majorRound = 1;
@@ -380,7 +469,9 @@ const resetMatch = () => {
     state.advanced.minorScore = { cpu: 0, player: 0, draw: 0 };
     state.advanced.cpuCards = [...CARD_LABELS];
     state.advanced.playerCards = [...CARD_LABELS];
-    advancedStatus.textContent = "進階模式開始：每大局完成 5 回合後，再選 1 張功能卡結算。";
+    state.advanced.awaitingNext = false;
+    state.advanced.matchFinished = false;
+    advancedStatus.textContent = "進階模式開始：先完成 5 回合，再把功能卡擺放到指定位置並執行效果。";
     hint.textContent = "進階模式：先完成第 1 大局的 5 回合。";
     renderAdvancedCardOptions();
     updateAdvancedDashboard();
@@ -402,11 +493,11 @@ const setMode = (mode) => {
 
   if (isAdvanced) {
     gameTitle.textContent = "1-2-3-4-5 遊戲（進階規則）";
-    gameSubtitle.innerHTML = "三大局制，含 <strong>J / Q / K / JOKER</strong> 功能卡，平手可比小分。";
+    gameSubtitle.innerHTML = "可視化功能卡擺放：<strong>J / Q / K / JOKER</strong>，每大局執行後展示結果再決定是否進下一局。";
     rulesList.innerHTML = `
       <li>每大局先進行 5 回合出牌（不可重複）。</li>
-      <li>雙方各出 1 張功能卡並選位置，依序觸發後結算。</li>
-      <li>先到 2 勝直接獲勝；三大局同分可加開第四局，再比小分。</li>
+      <li>雙方把功能卡擺放到指定位置，再執行效果。</li>
+      <li>執行後會留在當前畫面展示結果，按「下一大局」才繼續。</li>
     `;
   } else {
     gameTitle.textContent = "1-2-3-4-5 遊戲（基本規則）";
@@ -433,6 +524,7 @@ playerArea.addEventListener("drop", (event) => {
 
 document.getElementById("restart-btn").addEventListener("click", resetMatch);
 resolveAdvancedBtn.addEventListener("click", settleAdvancedMajorRound);
+nextMajorBtn.addEventListener("click", startNextMajorRound);
 modeBasicBtn.addEventListener("click", () => setMode(MODE.BASIC));
 modeAdvancedBtn.addEventListener("click", () => setMode(MODE.ADVANCED));
 

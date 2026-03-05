@@ -164,6 +164,41 @@ body {
   white-space: nowrap;
 }
 
+
+.func-row-wrap {
+  display: grid;
+  gap: 6px;
+}
+
+.func-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.func-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(54px, 1fr));
+  gap: 8px;
+}
+
+.func-slot {
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px dashed rgba(168, 188, 245, 0.55);
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #dbe6ff;
+  font-size: 13px;
+}
+
+.func-slot.active {
+  border-style: solid;
+  border-color: rgba(60, 224, 180, 0.8);
+  background: rgba(60, 224, 180, 0.18);
+}
 .slots,
 .hand {
   display: grid;
@@ -236,7 +271,7 @@ body {
 
 .advanced-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr auto auto;
   gap: 10px;
   align-items: end;
 }
@@ -379,7 +414,8 @@ th {
   }
 
   .slots,
-  .hand {
+  .hand,
+  .func-row {
     grid-template-columns: repeat(5, minmax(48px, 1fr));
     gap: 6px;
   }
@@ -401,4 +437,10 @@ th {
   .button {
     width: 100%;
   }
+}
+
+.button.ghost {
+  background: transparent;
+  border-color: rgba(168, 188, 245, 0.6);
+  color: #d8e5ff;
 }

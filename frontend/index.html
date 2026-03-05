@@ -35,11 +35,21 @@
         </div>
         <div id="cpu-area" class="slots"></div>
 
+        <div class="func-row-wrap">
+          <span class="func-label">電腦功能卡擺放</span>
+          <div id="cpu-func-row" class="func-row"></div>
+        </div>
+
         <h2 class="mid-title">出牌區</h2>
         <div id="player-area" class="slots drop-target" aria-label="玩家置牌區"></div>
 
         <h2>玩家手牌</h2>
         <div id="player-hand" class="hand"></div>
+
+        <div class="func-row-wrap">
+          <span class="func-label">玩家功能卡擺放</span>
+          <div id="player-func-row" class="func-row"></div>
+        </div>
       </section>
 
       <footer class="action-row">
@@ -72,7 +82,8 @@
               <option value="5">位置 5</option>
             </select>
           </div>
-          <button id="resolve-advanced-btn" class="button" type="button" disabled>結算本大局</button>
+          <button id="resolve-advanced-btn" class="button" type="button" disabled>執行功能卡效果</button>
+          <button id="next-major-btn" class="button ghost hidden" type="button">下一大局</button>
         </div>
 
         <p id="cards-left" class="hint">剩餘功能卡：J, Q, K, JOKER</p>
