@@ -14,14 +14,24 @@
       <header class="game-header">
         <h1 id="game-title">1-2-3-4-5 遊戲（基本規則）</h1>
         <p id="game-subtitle" class="subtitle">大數字勝，例外：<strong>1 勝 5、2 勝 4</strong>。每張牌只能出一次。</p>
+
         <div class="mode-switch" role="group" aria-label="模式切換">
           <button id="mode-basic" class="button mode active" type="button">普通模式</button>
           <button id="mode-advanced" class="button mode" type="button">進階模式</button>
         </div>
+
+        <div class="guide-strip" aria-live="polite">
+          <span id="step-choose-mode" class="guide-step active">1. 選模式</span>
+          <span id="step-play-five" class="guide-step">2. 出完 5 張牌</span>
+          <span id="step-resolve-card" class="guide-step">3.（進階）結算功能卡</span>
+        </div>
       </header>
 
       <section class="battlefield">
-        <h2>電腦手牌</h2>
+        <div class="row-title">
+          <h2>電腦手牌</h2>
+          <span id="round-progress" class="pill">回合 0 / 5</span>
+        </div>
         <div id="cpu-area" class="slots"></div>
 
         <h2 class="mid-title">出牌區</h2>
@@ -37,10 +47,18 @@
       </footer>
 
       <section id="advanced-controls" class="panel advanced-controls hidden" aria-live="polite">
-        <h3>進階功能卡操作</h3>
+        <div class="advanced-top">
+          <h3>進階功能卡結算</h3>
+          <div class="advanced-stats">
+            <span id="major-round-pill" class="pill">大局 1 / 3+</span>
+            <span id="major-score-pill" class="pill">大局比數 玩家 0 : 0 電腦</span>
+            <span id="minor-score-pill" class="pill">小分 玩家 0 : 0 電腦</span>
+          </div>
+        </div>
+
         <div class="advanced-grid">
           <div>
-            <label for="player-card-select">玩家功能卡</label>
+            <label for="player-card-select">玩家功能卡（每張整場僅一次）</label>
             <select id="player-card-select"></select>
           </div>
           <div>
@@ -53,8 +71,10 @@
               <option value="5">位置 5</option>
             </select>
           </div>
-          <button id="resolve-advanced-btn" class="button" type="button">結算本大局</button>
+          <button id="resolve-advanced-btn" class="button" type="button" disabled>結算本大局</button>
         </div>
+
+        <p id="cards-left" class="hint">剩餘功能卡：J, Q, K, JOKER</p>
         <p id="advanced-status" class="hint"></p>
       </section>
     </section>
@@ -67,6 +87,17 @@
           <li>共 5 回合，系統會顯示 WIN / LOSE / DRAW。</li>
           <li>按 Restart 可快速再開一局。</li>
         </ol>
+      </details>
+
+      <details class="panel fold" open>
+        <summary>功能卡速查（進階）</summary>
+        <ul class="card-guide">
+          <li><strong>J</strong>：指定位置與左邊交換（位置1會和位置5交換）</li>
+          <li><strong>Q</strong>：指定位置與右邊交換（位置5會和位置1交換）</li>
+          <li><strong>K</strong>：指定位置與對手同位置交換</li>
+          <li><strong>JOKER</strong>：雙方整個盤面互換</li>
+        </ul>
+        <p class="hint">觸發順序：J/Q → K → JOKER（玩家先觸發）</p>
       </details>
 
       <details class="panel fold" open>
