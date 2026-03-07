@@ -49,6 +49,11 @@ const playerCardSelect = document.getElementById("player-card-select");
 const playerPosSelect = document.getElementById("player-pos-select");
 const resolveAdvancedBtn = document.getElementById("resolve-advanced-btn");
 const nextMajorBtn = document.getElementById("next-major-btn");
+const effectLog = document.getElementById("effect-log");
+const beforeCpu = document.getElementById("before-cpu");
+const beforePlayer = document.getElementById("before-player");
+const afterCpu = document.getElementById("after-cpu");
+const afterPlayer = document.getElementById("after-player");
 
 const modeBasicBtn = document.getElementById("mode-basic");
 const modeAdvancedBtn = document.getElementById("mode-advanced");
@@ -145,6 +150,36 @@ const renderBoardToArea = (cpuBoard, playerBoard) => {
   }
 };
 
+const renderMiniRow = (el, arr) => {
+  el.innerHTML = "";
+  arr.forEach((n) => {
+    const chip = document.createElement("span");
+    chip.className = "mini-chip";
+    chip.textContent = n;
+    el.appendChild(chip);
+  });
+};
+
+const clearEffectPanel = () => {
+  effectLog.innerHTML = "<li>尚未執行功能卡效果。</li>";
+  [beforeCpu, beforePlayer, afterCpu, afterPlayer].forEach((el) => {
+    el.innerHTML = "";
+  });
+};
+
+const renderEffectPanel = ({ logs, beforeCpuBoard, beforePlayerBoard, afterCpuBoard, afterPlayerBoard }) => {
+  effectLog.innerHTML = "";
+  logs.forEach((msg) => {
+    const li = document.createElement("li");
+    li.textContent = msg;
+    effectLog.appendChild(li);
+  });
+  renderMiniRow(beforeCpu, beforeCpuBoard);
+  renderMiniRow(beforePlayer, beforePlayerBoard);
+  renderMiniRow(afterCpu, afterCpuBoard);
+  renderMiniRow(afterPlayer, afterPlayerBoard);
+};
+
 const setStepState = (el, { active = false, done = false }) => {
   el.classList.toggle("active", active);
   el.classList.toggle("done", done);
@@ -221,6 +256,7 @@ const resetRound = () => {
   state.advanced.awaitingNext = false;
   buildSlots();
   clearFunctionPlacement();
+  clearEffectPanel();
   renderPlayerHand();
   updateRoundProgress();
   updateGuide();
@@ -348,18 +384,41 @@ const settleAdvancedMajorRound = () => {
 
   const playerBoard = [...state.playerHistory];
   const cpuBoard = [...state.cpuHistory];
+  const beforePlayerBoard = [...playerBoard];
+  const beforeCpuBoard = [...cpuBoard];
+  const logs = [
+    `玩家將 ${cardText(playerCard)} 放在位置 ${playerPos}，電腦將 ${cardText(cpuCard)} 放在位置 ${cpuPos}。`,
+  ];
 
   renderFunctionPlacement(cpuCard, cpuPos, playerCard, playerPos);
 
-  // 觸發順序：J/Q -> K -> JOKER（玩家先觸發）
-  if (playerCard === "J" || playerCard === "Q") applyJQ(playerBoard, playerCard, playerPos);
-  if (cpuCard === "J" || cpuCard === "Q") applyJQ(cpuBoard, cpuCard, cpuPos);
-  if (playerCard === "K") applyK(playerBoard, cpuBoard, playerPos);
-  if (cpuCard === "K") applyK(playerBoard, cpuBoard, cpuPos);
-  if (playerCard === "JK") applyJoker(playerBoard, cpuBoard);
-  if (cpuCard === "JK") applyJoker(playerBoard, cpuBoard);
+  if (playerCard === "J" || playerCard === "Q") {
+    applyJQ(playerBoard, playerCard, playerPos);
+    logs.push(`玩家 ${cardText(playerCard)} 先觸發，玩家盤面調整完成。`);
+  }
+  if (cpuCard === "J" || cpuCard === "Q") {
+    applyJQ(cpuBoard, cpuCard, cpuPos);
+    logs.push(`電腦 ${cardText(cpuCard)} 觸發，電腦盤面調整完成。`);
+  }
+  if (playerCard === "K") {
+    applyK(playerBoard, cpuBoard, playerPos);
+    logs.push(`玩家 K 觸發，交換雙方位置 ${playerPos}。`);
+  }
+  if (cpuCard === "K") {
+    applyK(playerBoard, cpuBoard, cpuPos);
+    logs.push(`電腦 K 觸發，交換雙方位置 ${cpuPos}。`);
+  }
+  if (playerCard === "JK") {
+    applyJoker(playerBoard, cpuBoard);
+    logs.push("玩家 JOKER 觸發，雙方整體盤面互換。");
+  }
+  if (cpuCard === "JK") {
+    applyJoker(playerBoard, cpuBoard);
+    logs.push("電腦 JOKER 觸發，雙方整體盤面互換。");
+  }
 
   renderBoardToArea(cpuBoard, playerBoard);
+  renderEffectPanel({ logs, beforeCpuBoard, beforePlayerBoard, afterCpuBoard: cpuBoard, afterPlayerBoard: playerBoard });
 
   const { playerWins, cpuWins, draws } = countBoardResult(cpuBoard, playerBoard);
   state.advanced.minorScore.player += playerWins;
@@ -375,7 +434,7 @@ const settleAdvancedMajorRound = () => {
 
   state.advanced.awaitingNext = true;
 
-  advancedStatus.textContent = `第 ${state.advanced.majorRound} 大局：玩家 ${cardText(playerCard)} 放在 ${playerPos} 號、電腦 ${cardText(cpuCard)} 放在 ${cpuPos} 號。效果執行後小局 ${playerWins}:${cpuWins}（和局 ${draws}）。`;
+  advancedStatus.textContent = `第 ${state.advanced.majorRound} 大局：玩家 ${cardText(playerCard)}(${playerPos})、電腦 ${cardText(cpuCard)}(${cpuPos})。小局 ${playerWins}:${cpuWins}（和局 ${draws}）。`;
 
   if (playerWins > cpuWins) {
     finalResult.textContent = `第 ${state.advanced.majorRound} 大局結果：玩家勝 (${playerWins}:${cpuWins})`;
@@ -395,7 +454,7 @@ const settleAdvancedMajorRound = () => {
   if (advancedShouldEnd()) {
     finalizeAdvancedMatch();
   } else {
-    hint.textContent = "此大局結果已展示。請按「下一大局」繼續。";
+    hint.textContent = "此大局效果與結果已展示。請按「下一大局」繼續。";
     nextMajorBtn.classList.remove("hidden");
   }
 };
@@ -449,7 +508,7 @@ const playRound = (playerValue) => {
     if (state.mode === MODE.BASIC) {
       finalizeBasicGame();
     } else {
-      hint.textContent = "5 回合完成，請選擇功能卡與位置，執行效果並查看本大局結果。";
+      hint.textContent = "5 回合完成，請擺放功能卡並執行效果（會顯示前後盤面與流程）。";
       resolveAdvancedBtn.disabled = false;
     }
   } else {
@@ -471,7 +530,7 @@ const resetMatch = () => {
     state.advanced.playerCards = [...CARD_LABELS];
     state.advanced.awaitingNext = false;
     state.advanced.matchFinished = false;
-    advancedStatus.textContent = "進階模式開始：先完成 5 回合，再把功能卡擺放到指定位置並執行效果。";
+    advancedStatus.textContent = "進階模式：先完成 5 回合，再擺放功能卡；系統會逐步展示效果流程與前後盤面。";
     hint.textContent = "進階模式：先完成第 1 大局的 5 回合。";
     renderAdvancedCardOptions();
     updateAdvancedDashboard();
@@ -493,11 +552,11 @@ const setMode = (mode) => {
 
   if (isAdvanced) {
     gameTitle.textContent = "1-2-3-4-5 遊戲（進階規則）";
-    gameSubtitle.innerHTML = "可視化功能卡擺放：<strong>J / Q / K / JOKER</strong>，每大局執行後展示結果再決定是否進下一局。";
+    gameSubtitle.innerHTML = "可視化功能卡擺放：<strong>J / Q / K / JOKER</strong>，執行後會保留結果畫面，方便觀察策略。";
     rulesList.innerHTML = `
       <li>每大局先進行 5 回合出牌（不可重複）。</li>
       <li>雙方把功能卡擺放到指定位置，再執行效果。</li>
-      <li>執行後會留在當前畫面展示結果，按「下一大局」才繼續。</li>
+      <li>執行後會展示「效果流程 + 前後盤面」，按「下一大局」才繼續。</li>
     `;
   } else {
     gameTitle.textContent = "1-2-3-4-5 遊戲（基本規則）";
