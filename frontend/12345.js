@@ -30,6 +30,8 @@ const cpuArea = document.getElementById("cpu-area");
 const playerArea = document.getElementById("player-area");
 const cpuFuncRow = document.getElementById("cpu-func-row");
 const playerFuncRow = document.getElementById("player-func-row");
+const advancedBoardTools = document.getElementById("advanced-board-tools");
+const roundOutcomeRow = document.getElementById("round-outcome-row");
 const playerHand = document.getElementById("player-hand");
 const roundTableBody = document.querySelector("#round-table tbody");
 const finalResult = document.getElementById("final-result");
@@ -103,6 +105,28 @@ const applyJoker = (playerDeck, cpuDeck) => {
   cpuDeck.splice(0, cpuDeck.length, ...playerCopy);
 };
 
+
+const resultLabel = (result) => {
+  if (result === "WIN") return "WIN";
+  if (result === "LOSE") return "LOSE";
+  return "DRAW";
+};
+
+const renderOutcomeRow = (cpuBoard, playerBoard) => {
+  roundOutcomeRow.innerHTML = "";
+  for (let i = 0; i < TOTAL_ROUNDS; i += 1) {
+    const chip = document.createElement("div");
+    chip.className = "outcome-chip";
+    if (playerBoard[i] !== undefined && cpuBoard[i] !== undefined) {
+      const r = compareCards(cpuBoard[i], playerBoard[i]);
+      chip.textContent = resultLabel(r);
+      chip.classList.add(r.toLowerCase());
+    } else {
+      chip.textContent = "-";
+    }
+    roundOutcomeRow.appendChild(chip);
+  }
+};
 const createSlot = (className = "slot") => {
   const slot = document.createElement("div");
   slot.className = className;
@@ -257,7 +281,9 @@ const resetRound = () => {
   buildSlots();
   clearFunctionPlacement();
   clearEffectPanel();
+  renderOutcomeRow([], []);
   renderPlayerHand();
+  renderOutcomeRow(state.cpuHistory, state.playerHistory);
   updateRoundProgress();
   updateGuide();
 };
@@ -418,6 +444,7 @@ const settleAdvancedMajorRound = () => {
   }
 
   renderBoardToArea(cpuBoard, playerBoard);
+  renderOutcomeRow(cpuBoard, playerBoard);
   renderEffectPanel({ logs, beforeCpuBoard, beforePlayerBoard, afterCpuBoard: cpuBoard, afterPlayerBoard: playerBoard });
 
   const { playerWins, cpuWins, draws } = countBoardResult(cpuBoard, playerBoard);
@@ -501,6 +528,7 @@ const playRound = (playerValue) => {
   renderRoundRow(state.advanced.majorRound, roundIndex, cpuValue, playerValue, roundResult);
 
   renderPlayerHand();
+  renderOutcomeRow(state.cpuHistory, state.playerHistory);
   updateRoundProgress();
   updateGuide();
 
@@ -549,6 +577,7 @@ const setMode = (mode) => {
   modeBasicBtn.classList.toggle("active", !isAdvanced);
   modeAdvancedBtn.classList.toggle("active", isAdvanced);
   advancedControls.classList.toggle("hidden", !isAdvanced);
+  advancedBoardTools.classList.toggle("hidden", !isAdvanced);
 
   if (isAdvanced) {
     gameTitle.textContent = "1-2-3-4-5 遊戲（進階規則）";
