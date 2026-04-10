@@ -22,6 +22,9 @@ const state = {
     minorScore: { cpu: 0, player: 0, draw: 0 },
     cpuCards: [...CARD_LABELS],
     playerCards: [...CARD_LABELS],
+    selectedCard: null,
+    selectedPos: null,
+    modalOpen: false,
     awaitingNext: false,
     matchFinished: false,
   },
@@ -52,8 +55,8 @@ const cardsLeft = document.getElementById("cards-left");
 const majorRoundPill = document.getElementById("major-round-pill");
 const majorScorePill = document.getElementById("major-score-pill");
 const minorScorePill = document.getElementById("minor-score-pill");
-const playerCardSelect = document.getElementById("player-card-select");
-const playerPosSelect = document.getElementById("player-pos-select");
+const openAdvancedModalBtn = document.getElementById("open-advanced-modal-btn");
+const funcPlacementSummary = document.getElementById("func-placement-summary");
 const resolveAdvancedBtn = document.getElementById("resolve-advanced-btn");
 const nextMajorBtn = document.getElementById("next-major-btn");
 const effectPanel = document.getElementById("effect-panel");
@@ -62,6 +65,18 @@ const beforeCpu = document.getElementById("before-cpu");
 const beforePlayer = document.getElementById("before-player");
 const afterCpu = document.getElementById("after-cpu");
 const afterPlayer = document.getElementById("after-player");
+
+const advancedModal = document.getElementById("advanced-modal");
+const advancedModalBackdrop = document.getElementById("advanced-modal-backdrop");
+const closeAdvancedModalBtn = document.getElementById("close-advanced-modal-btn");
+const advancedModalIntro = document.getElementById("advanced-modal-intro");
+const modalPlayerFuncHand = document.getElementById("modal-player-func-hand");
+const modalPlayerFuncTargets = document.getElementById("modal-player-func-targets");
+const modalFuncPlacementSummary = document.getElementById("modal-func-placement-summary");
+const modalCpuBoard = document.getElementById("modal-cpu-board");
+const modalPlayerBoard = document.getElementById("modal-player-board");
+const modalCpuCardsLeft = document.getElementById("modal-cpu-cards-left");
+const modalPlayerCardsLeft = document.getElementById("modal-player-cards-left");
 
 const modeBasicBtn = document.getElementById("mode-basic");
 const modeAdvancedBtn = document.getElementById("mode-advanced");
@@ -128,6 +143,20 @@ const isAdvancedRoundSettled = () =>
 
 const isInteractionLocked = () =>
   state.mode === MODE.ADVANCED && (state.advanced.awaitingNext || state.advanced.matchFinished);
+
+const clearAdvancedSelection = () => {
+  state.advanced.selectedCard = null;
+  state.advanced.selectedPos = null;
+};
+
+const openAdvancedModal = () => {
+  if (!isAdvancedResolutionVisible() || isAdvancedRoundSettled()) return;
+  state.advanced.modalOpen = true;
+};
+
+const closeAdvancedModal = () => {
+  state.advanced.modalOpen = false;
+};
 
 const createSlot = (className = "slot") => {
   const slot = document.createElement("div");
@@ -240,6 +269,42 @@ const renderEffectPanel = ({ logs, beforeCpuBoard, beforePlayerBoard, afterCpuBo
   renderMiniRow(afterPlayer, afterPlayerBoard);
 };
 
+const renderBoardSnapshotRow = (el, arr) => {
+  el.innerHTML = "";
+  for (let i = 0; i < TOTAL_ROUNDS; i += 1) {
+    const chip = document.createElement("span");
+    chip.className = "mini-chip";
+    chip.textContent = arr[i] ?? "-";
+    el.appendChild(chip);
+  }
+};
+
+const renderCardChipRow = (el, cards, tone) => {
+  el.innerHTML = "";
+
+  if (!cards.length) {
+    const chip = document.createElement("span");
+    chip.className = "card-chip empty";
+    chip.textContent = "無";
+    el.appendChild(chip);
+    return;
+  }
+
+  cards.forEach((card) => {
+    const chip = document.createElement("span");
+    chip.className = `card-chip ${tone}`;
+    chip.textContent = cardText(card);
+    el.appendChild(chip);
+  });
+};
+
+const renderAdvancedDecisionContext = () => {
+  renderBoardSnapshotRow(modalCpuBoard, state.cpuHistory);
+  renderBoardSnapshotRow(modalPlayerBoard, state.playerHistory);
+  renderCardChipRow(modalCpuCardsLeft, state.advanced.cpuCards, "enemy");
+  renderCardChipRow(modalPlayerCardsLeft, state.advanced.playerCards, "player");
+};
+
 const setStepState = (el, { active = false, done = false }) => {
   el.classList.toggle("active", active);
   el.classList.toggle("current-step", active);
@@ -274,6 +339,24 @@ const updateScoreboardView = () => {
 
 const setHint = (message) => {
   hint.textContent = message;
+};
+
+const updatePlacementSummary = () => {
+  const { selectedCard, selectedPos, playerCards } = state.advanced;
+  let message = "尚未選擇功能卡與位置。";
+
+  if (playerCards.length === 0) {
+    message = "功能卡已全部使用完畢。";
+  } else if (selectedCard && selectedPos) {
+    message = `已選擇 ${cardText(selectedCard)} 放在位置 ${selectedPos}。`;
+  } else if (selectedCard) {
+    message = `已選擇 ${cardText(selectedCard)}，接著請選位置。`;
+  } else if (selectedPos) {
+    message = `已選擇位置 ${selectedPos}，接著請選 1 張功能卡。`;
+  }
+
+  funcPlacementSummary.textContent = message;
+  modalFuncPlacementSummary.textContent = message;
 };
 
 const renderPlayerHand = () => {
@@ -351,18 +434,109 @@ const renderRoundRow = (majorRound, roundIndex, cpuValue, playerValue, result) =
   roundTableBody.appendChild(tr);
 };
 
-const renderAdvancedCardOptions = () => {
-  playerCardSelect.innerHTML = "";
-  state.advanced.playerCards.forEach((card) => {
-    const option = document.createElement("option");
-    option.value = card;
-    option.textContent = cardText(card);
-    playerCardSelect.appendChild(option);
+const chooseAdvancedCard = (card) => {
+  if (!state.advanced.playerCards.includes(card) || isInteractionLocked()) return;
+  state.advanced.selectedCard = state.advanced.selectedCard === card ? null : card;
+  renderAdvancedCardOptions();
+};
+
+const chooseAdvancedPosition = (pos) => {
+  if (isInteractionLocked()) return;
+  state.advanced.selectedPos = state.advanced.selectedPos === pos ? null : pos;
+  renderAdvancedCardOptions();
+};
+
+const renderAdvancedFunctionHand = () => {
+  modalPlayerFuncHand.innerHTML = "";
+  const canInteract = isAdvancedResolutionVisible() && !isInteractionLocked();
+
+  CARD_LABELS.forEach((card) => {
+    const cardEl = document.createElement("button");
+    const used = !state.advanced.playerCards.includes(card);
+
+    cardEl.className = "card func-card";
+    cardEl.type = "button";
+    cardEl.dataset.card = card;
+
+    if (used) {
+      const valueSpan = document.createElement("span");
+      const usedLabel = document.createElement("span");
+      valueSpan.textContent = cardText(card);
+      usedLabel.textContent = "已用";
+      usedLabel.className = "card-used-label";
+      cardEl.classList.add("used", "locked");
+      cardEl.disabled = true;
+      cardEl.append(valueSpan, usedLabel);
+    } else {
+      cardEl.textContent = cardText(card);
+      cardEl.classList.toggle("selected", state.advanced.selectedCard === card);
+      cardEl.disabled = !canInteract;
+
+      if (!canInteract) {
+        cardEl.classList.add("locked");
+      } else {
+        cardEl.addEventListener("click", () => chooseAdvancedCard(card));
+      }
+    }
+
+    modalPlayerFuncHand.appendChild(cardEl);
   });
+};
+
+const renderAdvancedTargets = () => {
+  modalPlayerFuncTargets.innerHTML = "";
+  const canInteract = isAdvancedResolutionVisible() && !isInteractionLocked();
+
+  for (let pos = 1; pos <= TOTAL_ROUNDS; pos += 1) {
+    const slot = document.createElement("button");
+    const index = document.createElement("span");
+    const content = document.createElement("span");
+    const selected = state.advanced.selectedPos === pos;
+
+    slot.className = "func-target-slot";
+    slot.type = "button";
+    slot.dataset.pos = String(pos);
+    index.className = "func-target-index";
+    content.className = "func-target-card";
+    index.textContent = `位置 ${pos}`;
+
+    if (selected && state.advanced.selectedCard) {
+      content.textContent = cardText(state.advanced.selectedCard);
+      slot.classList.add("selected");
+    } else if (selected) {
+      content.textContent = "已選";
+      slot.classList.add("selected");
+    } else {
+      content.textContent = "選擇";
+    }
+
+    if (state.advanced.selectedCard && canInteract) {
+      slot.classList.add("armed");
+    }
+
+    if (!canInteract) {
+      slot.classList.add("locked");
+      slot.disabled = true;
+    } else {
+      slot.addEventListener("click", () => chooseAdvancedPosition(pos));
+    }
+
+    slot.append(index, content);
+    modalPlayerFuncTargets.appendChild(slot);
+  }
+};
+
+const renderAdvancedCardOptions = () => {
+  renderAdvancedDecisionContext();
+  renderAdvancedFunctionHand();
+  renderAdvancedTargets();
+  updatePlacementSummary();
 
   resolveAdvancedBtn.disabled =
     state.playerHistory.length !== TOTAL_ROUNDS ||
     state.advanced.playerCards.length === 0 ||
+    !state.advanced.selectedCard ||
+    !state.advanced.selectedPos ||
     state.advanced.awaitingNext ||
     state.advanced.matchFinished;
 };
@@ -406,6 +580,10 @@ const syncUiState = () => {
   const settled = isAdvancedRoundSettled();
   const awaitingResolution = state.mode === MODE.ADVANCED && resolutionVisible && !settled;
 
+  if (!awaitingResolution) {
+    closeAdvancedModal();
+  }
+
   advancedControls.classList.toggle("hidden", !resolutionVisible);
   advancedControls.classList.toggle("awaiting-resolution", awaitingResolution);
   advancedBoardTools.classList.toggle("hidden", !settled);
@@ -417,21 +595,29 @@ const syncUiState = () => {
     resolutionPill.textContent = settled ? "已完成功能卡結算" : "等待功能卡結算";
   }
 
+  openAdvancedModalBtn.classList.toggle("hidden", !awaitingResolution);
+  advancedModal.classList.toggle("hidden", !(awaitingResolution && state.advanced.modalOpen));
+
   gameShell.classList.toggle("awaiting-resolution", awaitingResolution);
   gameShell.classList.toggle("locked", isInteractionLocked());
   playerHand.classList.toggle("locked", isInteractionLocked());
   playerArea.classList.toggle("locked", isInteractionLocked());
 
   if (state.mode !== MODE.ADVANCED) {
-    advancedIntro.textContent = "先選功能卡，再選位置，最後執行結算。";
+    advancedIntro.textContent = "5 小局完成後會彈出功能卡視窗，讓你選卡與放置位置。";
+    advancedModalIntro.textContent = "先選 1 張功能卡，再選位置。";
   } else if (!resolutionVisible) {
-    advancedIntro.textContent = "完成 5 回合後，這裡會出現功能卡結算。";
+    advancedIntro.textContent = "完成 5 小局後，會自動跳出功能卡視窗。";
+    advancedModalIntro.textContent = "先選 1 張功能卡，再選位置。";
   } else if (!settled) {
-    advancedIntro.textContent = "先選功能卡，再選位置，最後執行結算。";
+    advancedIntro.textContent = "功能卡尚未結算，可透過彈出視窗選卡與位置。";
+    advancedModalIntro.textContent = "先選 1 張功能卡，再選擇要放置的局數位置。";
   } else if (state.advanced.matchFinished) {
     advancedIntro.textContent = "本場進階對局已完成，保留結算結果供你檢視。";
+    advancedModalIntro.textContent = "本場進階對局已完成。";
   } else {
     advancedIntro.textContent = "已展示功能卡位置與盤面差異，準備進入下一大局。";
+    advancedModalIntro.textContent = "此大局已完成功能卡結算。";
   }
 };
 
@@ -441,6 +627,7 @@ const resetRound = () => {
   state.cpuHistory = [];
   state.playerHistory = [];
   state.advanced.awaitingNext = false;
+  clearAdvancedSelection();
 
   buildSlots();
   clearFunctionPlacement();
@@ -450,12 +637,14 @@ const resetRound = () => {
   renderOutcomeRow([], []);
   updateRoundProgress();
   updateGuide();
+  renderAdvancedCardOptions();
   syncUiState();
 };
 
 const finalizeAdvancedMatch = () => {
   const { majorScore, minorScore } = state.advanced;
   state.advanced.matchFinished = true;
+  closeAdvancedModal();
 
   if (majorScore.player > majorScore.cpu) {
     finalResult.textContent = `進階模式結束：玩家勝利（大局 ${majorScore.player}:${majorScore.cpu}）`;
@@ -496,11 +685,12 @@ const startNextMajorRound = () => {
 
   state.advanced.majorRound += 1;
   state.advanced.awaitingNext = false;
+  closeAdvancedModal();
 
   setHint(`現在請完成第 ${state.advanced.majorRound} 大局的 5 回合出牌。`);
   finalResult.textContent = `進階進行中：大局 玩家 ${state.advanced.majorScore.player} : 電腦 ${state.advanced.majorScore.cpu}`;
   finalResult.className = "final-result";
-  advancedStatus.textContent = "完成 5 回合後，再選功能卡並執行結算。";
+  advancedStatus.textContent = "完成 5 小局後，系統會跳出功能卡視窗。";
 
   nextMajorBtn.classList.add("hidden");
   resetRound();
@@ -519,9 +709,9 @@ const settleAdvancedMajorRound = () => {
     return;
   }
 
-  const playerCard = playerCardSelect.value;
-  const playerPos = Number(playerPosSelect.value);
-  if (!state.advanced.playerCards.includes(playerCard)) return;
+  const playerCard = state.advanced.selectedCard;
+  const playerPos = state.advanced.selectedPos;
+  if (!playerCard || !playerPos || !state.advanced.playerCards.includes(playerCard)) return;
 
   const cpuCard = state.advanced.cpuCards[Math.floor(Math.random() * state.advanced.cpuCards.length)];
   const cpuPos = Math.floor(Math.random() * TOTAL_ROUNDS) + 1;
@@ -576,6 +766,8 @@ const settleAdvancedMajorRound = () => {
 
   state.advanced.playerCards = state.advanced.playerCards.filter((card) => card !== playerCard);
   state.advanced.cpuCards = state.advanced.cpuCards.filter((card) => card !== cpuCard);
+  clearAdvancedSelection();
+  closeAdvancedModal();
 
   state.advanced.awaitingNext = true;
 
@@ -659,9 +851,10 @@ const playRound = (playerValue) => {
     if (state.mode === MODE.BASIC) {
       finalizeBasicGame();
     } else {
-      setHint("現在請選功能卡並執行結算。");
-      advancedStatus.textContent = "請依序完成：選功能卡、選位置、執行功能卡效果。";
-      resolveAdvancedBtn.disabled = false;
+      openAdvancedModal();
+      setHint("功能卡視窗已開啟，現在請選擇功能卡與位置。");
+      advancedStatus.textContent = "請在彈出視窗中選擇功能卡與放置位置。";
+      renderAdvancedCardOptions();
       syncUiState();
     }
   } else if (state.mode === MODE.ADVANCED) {
@@ -676,6 +869,7 @@ const resetMatch = () => {
   finalResult.textContent = state.mode === MODE.ADVANCED ? "進階對局尚未完成。" : "本局尚未完成。";
   finalResult.className = "final-result";
   nextMajorBtn.classList.add("hidden");
+  closeAdvancedModal();
 
   if (state.mode === MODE.ADVANCED) {
     state.advanced.majorRound = 1;
@@ -683,23 +877,17 @@ const resetMatch = () => {
     state.advanced.minorScore = { cpu: 0, player: 0, draw: 0 };
     state.advanced.cpuCards = [...CARD_LABELS];
     state.advanced.playerCards = [...CARD_LABELS];
+    clearAdvancedSelection();
     state.advanced.awaitingNext = false;
     state.advanced.matchFinished = false;
-    advancedStatus.textContent = "完成 5 回合後，這裡會顯示功能卡結算摘要。";
+    advancedStatus.textContent = "完成 5 小局後，系統會跳出功能卡視窗。";
     setHint("現在請完成第 1 大局的 5 回合出牌。");
-    renderAdvancedCardOptions();
-    updateAdvancedDashboard();
   } else {
     advancedStatus.textContent = "";
     setHint("現在請選 1 張數字牌。");
   }
 
   resetRound();
-
-  if (state.mode === MODE.BASIC) {
-    clearEffectPanel();
-  }
-
   renderAdvancedCardOptions();
   updateAdvancedDashboard();
   syncUiState();
@@ -719,7 +907,7 @@ const setMode = (mode) => {
     modeNote.textContent = "每大局先完成 5 回合，再進入功能卡結算；功能卡整場各只能使用一次。";
     rulesList.innerHTML = `
       <li>每大局先完成 5 回合出牌，所有數字仍不可重複。</li>
-      <li>第 5 回合後再選功能卡與位置，畫面會展示前後盤面差異。</li>
+      <li>第 5 回合後會跳出功能卡視窗，選 1 張功能卡與要放置的位置。</li>
       <li>三大局內比分高者勝；若平手則比較加開局與小分。</li>
     `;
   } else {
@@ -770,10 +958,29 @@ infoPanels.forEach((panel) => {
 });
 
 document.getElementById("restart-btn").addEventListener("click", resetMatch);
+openAdvancedModalBtn.addEventListener("click", () => {
+  openAdvancedModal();
+  syncUiState();
+});
+closeAdvancedModalBtn.addEventListener("click", () => {
+  closeAdvancedModal();
+  syncUiState();
+});
+advancedModalBackdrop.addEventListener("click", () => {
+  closeAdvancedModal();
+  syncUiState();
+});
 resolveAdvancedBtn.addEventListener("click", settleAdvancedMajorRound);
 nextMajorBtn.addEventListener("click", startNextMajorRound);
 modeBasicBtn.addEventListener("click", () => setMode(MODE.BASIC));
 modeAdvancedBtn.addEventListener("click", () => setMode(MODE.ADVANCED));
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && state.advanced.modalOpen) {
+    closeAdvancedModal();
+    syncUiState();
+  }
+});
 
 setMode(MODE.BASIC);
 updateScoreboardView();
