@@ -3,265 +3,249 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>1-2-3-4-5 網頁遊戲</title>
-  <link rel="stylesheet" type="text/css" href="12345.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#08251f" />
+  <meta name="description" content="1-2-3-4-5 是一款五回合策略卡牌遊戲。善用數字牌與功能卡，破解對手的出牌順序。" />
+  <title>1-2-3-4-5｜策略卡牌遊戲</title>
+  <link rel="stylesheet" href="./12345.css" />
 </head>
 
 <body>
-  <main class="layout">
-    <section id="game-shell" class="game-shell panel">
-      <section class="battlefield" aria-label="主戰場">
-        <div class="battlefield-top">
-          <div>
-            <p class="section-kicker">PLAYFIELD</p>
-            <h2>主戰場</h2>
-          </div>
-          <span id="round-progress" class="pill">回合 0 / 5</span>
+  <div class="page-shell">
+    <header class="game-header" aria-labelledby="game-title">
+      <div class="brand-block">
+        <p class="eyebrow"><span class="suit-mark" aria-hidden="true">♠</span> FIVE-LANE CARD DUEL</p>
+        <h1 id="game-title">1・2・3・4・5</h1>
+        <p id="game-subtitle" class="subtitle">大數字勝，唯有 <strong>1 勝 5、2 勝 4</strong>。五張牌，五次抉擇。</p>
+      </div>
+
+      <div class="header-controls">
+        <div class="mode-switch" role="group" aria-label="選擇遊戲模式">
+          <button id="mode-basic" class="mode-button active" type="button" aria-pressed="true">
+            <span>普通</span><small>五局定勝負</small>
+          </button>
+          <button id="mode-advanced" class="mode-button" type="button" aria-pressed="false">
+            <span>進階</span><small>加入功能卡</small>
+          </button>
+        </div>
+        <button id="restart-btn" class="icon-button" type="button" aria-label="重新開始目前對局">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v6h6M5.6 15.5A7.5 7.5 0 1 0 6 7.5L4 10" /></svg>
+          <span>重新開始</span>
+        </button>
+      </div>
+    </header>
+
+    <nav class="guide-strip" aria-label="遊戲進度" aria-live="polite">
+      <span id="step-choose-mode" class="guide-step current-step"><b>01</b> 選擇模式</span>
+      <span class="guide-connector" aria-hidden="true"></span>
+      <span id="step-play-five" class="guide-step"><b>02</b> 完成五回合</span>
+      <span class="guide-connector" aria-hidden="true"></span>
+      <span id="step-resolve-card" class="guide-step"><b>03</b> 功能卡結算</span>
+    </nav>
+
+    <main class="layout">
+      <section id="game-shell" class="game-shell" aria-label="遊戲牌桌">
+        <div class="table-rim">
+          <section class="battlefield">
+            <div class="battlefield-top">
+              <div class="player-label enemy-label">
+                <span class="player-suit" aria-hidden="true">♦</span>
+                <div><small>OPPONENT</small><strong>電腦牌面</strong></div>
+              </div>
+              <div class="round-readout">
+                <span id="round-progress">回合 0 / 5</span>
+                <span id="resolution-pill" class="resolution-pill hidden">等待功能卡結算</span>
+              </div>
+            </div>
+
+            <div class="duel-board" aria-label="五回合對戰牌道">
+              <div class="lane-numbers" aria-hidden="true">
+                <span>Ⅰ</span><span>Ⅱ</span><span>Ⅲ</span><span>Ⅳ</span><span>Ⅴ</span>
+              </div>
+              <div id="cpu-area" class="slots cpu-slots" aria-label="電腦出牌序列"></div>
+
+              <section id="advanced-board-tools" class="function-placement hidden" aria-label="功能卡擺放位置">
+                <div id="cpu-func-row" class="func-row" aria-label="電腦功能卡位置"></div>
+                <div id="player-func-row" class="func-row" aria-label="玩家功能卡位置"></div>
+              </section>
+
+              <div id="round-outcome-row" class="outcome-row" aria-label="各回合勝負"></div>
+              <div id="player-area" class="slots player-slots drop-target" aria-label="玩家出牌序列"></div>
+            </div>
+
+            <div class="battlefield-bottom">
+              <div class="player-label player-label-self">
+                <span class="player-suit" aria-hidden="true">♠</span>
+                <div><small>YOU</small><strong>你的牌面</strong></div>
+              </div>
+              <p class="ace-note"><b>A</b> 在本遊戲代表數字 <b>1</b></p>
+            </div>
+
+            <div class="status-bar" aria-live="polite">
+              <span class="status-gem" aria-hidden="true"></span>
+              <div class="status-copy">
+                <p id="hint" class="hint">選一張黑桃牌出牌。</p>
+                <p id="final-result" class="final-result">本局尚未完成。</p>
+              </div>
+              <div class="action-buttons">
+                <button id="next-major-btn" class="button button-secondary hidden" type="button">進入下一大局</button>
+              </div>
+            </div>
+          </section>
         </div>
 
-        <section class="sequence-block">
-          <div class="sequence-head">
+        <section class="hand-stage" aria-labelledby="hand-title">
+          <div class="hand-heading">
             <div>
-              <h3>電腦出牌序列</h3>
-              <p class="mini-caption">依回合順序顯示</p>
+              <p class="section-kicker">YOUR HAND</p>
+              <h2 id="hand-title">選擇一張牌</h2>
             </div>
+            <p>點擊出牌<span class="desktop-only">，或拖曳至牌桌</span></p>
           </div>
-          <div id="cpu-area" class="slots"></div>
+          <div id="player-hand" class="hand" aria-label="玩家手牌"></div>
         </section>
 
-        <section id="advanced-board-tools" class="sequence-block advanced-only hidden">
-          <div class="sequence-head">
+        <section id="advanced-controls" class="advanced-controls hidden" aria-live="polite">
+          <div class="advanced-top">
             <div>
-              <h3>功能卡擺放位置</h3>
-              <p class="mini-caption">僅在結算後展示雙方功能卡位置</p>
+              <p class="section-kicker">ADVANCED RESOLUTION</p>
+              <h2>功能卡結算</h2>
+            </div>
+            <div class="advanced-stats">
+              <span id="major-round-pill">大局 1 / 3+</span>
+              <span id="major-score-pill">大局 玩家 0 : 0 電腦</span>
+              <span id="minor-score-pill">小分 玩家 0 : 0 電腦</span>
             </div>
           </div>
-
-          <div class="func-row-wrap">
-            <span class="func-label">電腦功能卡</span>
-            <div id="cpu-func-row" class="func-row"></div>
+          <p id="advanced-intro" class="panel-note">五回合完成後，選擇一張功能卡改變盤面。</p>
+          <div class="advanced-actions">
+            <button id="open-advanced-modal-btn" class="button" type="button">選擇功能卡</button>
+            <p id="func-placement-summary">尚未選擇功能卡與位置。</p>
           </div>
+          <p id="cards-left" class="cards-left">剩餘功能卡：J、Q、K、JOKER</p>
+          <p id="advanced-status" class="panel-note"></p>
 
-          <div class="func-row-wrap">
-            <span class="func-label">玩家功能卡</span>
-            <div id="player-func-row" class="func-row"></div>
-          </div>
-        </section>
-
-        <section class="sequence-block player-sequence">
-          <div class="sequence-head">
-            <div>
-              <h3>玩家出牌序列</h3>
-              <p class="mini-caption">拖曳或點擊手牌，依序填入本局</p>
+          <div id="effect-panel" class="effect-panel hidden">
+            <div class="effect-block">
+              <h3>效果流程</h3>
+              <ol id="effect-log" class="effect-log"><li>尚未執行功能卡效果。</li></ol>
             </div>
-            <span id="resolution-pill" class="pill subtle hidden">等待功能卡結算</span>
-          </div>
-          <div id="player-area" class="slots drop-target" aria-label="玩家出牌序列"></div>
-          <div id="round-outcome-row" class="outcome-row" aria-label="各回合結果"></div>
-        </section>
-
-        <section class="sequence-block hand-stage">
-          <div class="sequence-head">
-            <div>
-              <h3>玩家手牌</h3>
-              <p class="mini-caption">已使用的牌會保留位置並標示為已出</p>
+            <div class="effect-block board-diff">
+              <h3>盤面前後</h3>
+              <div class="diff-grid">
+                <span>效果前</span><div id="before-cpu" class="mini-row enemy"></div><div id="before-player" class="mini-row"></div>
+                <span>效果後</span><div id="after-cpu" class="mini-row enemy"></div><div id="after-player" class="mini-row"></div>
+              </div>
             </div>
           </div>
-          <div id="player-hand" class="hand"></div>
         </section>
       </section>
 
-      <footer class="action-row">
-        <div class="status-stack">
-          <p id="hint" class="hint">現在請選 1 張數字牌。</p>
-          <p id="final-result" class="final-result">本局尚未完成。</p>
-        </div>
-        <div class="action-buttons">
-          <button id="next-major-btn" class="button ghost hidden" type="button">進入下一大局</button>
-          <button id="restart-btn" class="button" type="button">重新開始</button>
-        </div>
-      </footer>
-
-      <section id="advanced-controls" class="panel advanced-controls hidden" aria-live="polite">
-        <div class="advanced-top">
-          <div>
-            <p class="eyebrow panel-eyebrow">ADVANCED RESOLUTION</p>
-            <h3>功能卡結算</h3>
-          </div>
-          <div class="advanced-stats">
-            <span id="major-round-pill" class="pill">大局 1 / 3+</span>
-            <span id="major-score-pill" class="pill">大局比數 玩家 0 : 0 電腦</span>
-            <span id="minor-score-pill" class="pill">小分 玩家 0 : 0 電腦</span>
-          </div>
-        </div>
-
-        <p id="advanced-intro" class="hint">5 小局完成後會彈出功能卡視窗，讓你選卡與放置位置。</p>
-
-        <div class="advanced-grid compact">
-          <button id="open-advanced-modal-btn" class="button" type="button">開啟功能卡視窗</button>
-        </div>
-
-        <p id="func-placement-summary" class="hint">尚未選擇功能卡與位置。</p>
-        <p id="cards-left" class="hint">剩餘功能卡：J, Q, K, JOKER</p>
-        <p id="advanced-status" class="hint"></p>
-
-        <div id="effect-panel" class="effect-panel hidden">
-          <div class="effect-block">
-            <h4>效果流程</h4>
-            <ol id="effect-log" class="effect-log">
-              <li>尚未執行功能卡效果。</li>
+      <aside class="side-panels" aria-label="遊戲資訊">
+        <details id="mode-panel" class="info-panel" open>
+          <summary><span><b>規則</b>目前模式</span><i aria-hidden="true"></i></summary>
+          <div class="info-content">
+            <p id="mode-note" class="panel-note">完成五回合出牌，再查看本局結果。</p>
+            <ol id="rules-list">
+              <li>每回合從手牌選一張。</li>
+              <li>每張牌只能使用一次。</li>
+              <li>五回合後比較勝局數。</li>
             </ol>
           </div>
-          <div class="effect-block">
-            <h4>盤面前後對照</h4>
-            <p class="mini-label">效果前（電腦 / 玩家）</p>
-            <div id="before-cpu" class="mini-row"></div>
-            <div id="before-player" class="mini-row"></div>
-            <p class="mini-label">效果後（電腦 / 玩家）</p>
-            <div id="after-cpu" class="mini-row"></div>
-            <div id="after-player" class="mini-row"></div>
+        </details>
+
+        <details id="function-panel" class="info-panel">
+          <summary><span><b>功能牌</b>進階速查</span><i aria-hidden="true"></i></summary>
+          <div class="info-content function-guide">
+            <div><strong>J</strong><span>與左側位置交換</span><em>←</em></div>
+            <div><strong>Q</strong><span>與右側位置交換</span><em>→</em></div>
+            <div><strong>K</strong><span>同位置實體牌連同花色交換</span><em>⇅</em></div>
+            <div><strong>JK</strong><span>雙方整排牌連同花色互換</span><em>⇄</em></div>
+            <p>觸發順序：J／Q → K → JOKER</p>
+          </div>
+        </details>
+
+        <details id="history-panel" class="info-panel">
+          <summary><span><b>紀錄</b>本局回合</span><i aria-hidden="true"></i></summary>
+          <div class="info-content table-wrap">
+            <table id="round-table">
+              <thead><tr><th>局</th><th>電腦</th><th>玩家</th><th>結果</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </details>
+
+        <details id="score-panel" class="info-panel score-panel">
+          <summary><span><b>戰績</b>累計比分</span><i aria-hidden="true"></i></summary>
+          <div class="info-content">
+            <table id="scoreboard">
+              <thead><tr><th>陣營</th><th>勝</th><th>負</th><th>和</th></tr></thead>
+              <tbody>
+                <tr class="enemy-row"><td>♦ 電腦</td><td id="cpu-win">0</td><td id="cpu-lose">0</td><td id="cpu-draw">0</td></tr>
+                <tr><td>♠ 玩家</td><td id="player-win">0</td><td id="player-lose">0</td><td id="player-draw">0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </aside>
+    </main>
+  </div>
+
+  <div id="drawer-scrim" class="drawer-scrim hidden" aria-hidden="true"></div>
+  <nav class="mobile-info-nav" aria-label="開啟遊戲資訊">
+    <button type="button" data-panel-target="mode-panel">規則</button>
+    <button type="button" data-panel-target="function-panel">功能牌</button>
+    <button type="button" data-panel-target="history-panel">紀錄</button>
+    <button type="button" data-panel-target="score-panel">戰績</button>
+  </nav>
+
+  <dialog id="advanced-modal" class="modal" aria-labelledby="advanced-modal-title">
+    <section class="modal-panel">
+      <div class="modal-top">
+        <div>
+          <p class="section-kicker">PLAY A TACTIC</p>
+          <h2 id="advanced-modal-title">選擇功能卡與位置</h2>
+        </div>
+        <button id="close-advanced-modal-btn" class="modal-close" type="button" aria-label="關閉功能卡視窗">×</button>
+      </div>
+      <div class="modal-scroll-content">
+        <p id="advanced-modal-intro" class="panel-note">先選一張功能卡，再選擇放置位置。</p>
+
+        <div class="modal-info-grid">
+          <div class="decision-block board-context">
+            <h3>目前盤面</h3>
+            <span>電腦</span><div id="modal-cpu-board" class="mini-row enemy"></div>
+            <span>玩家</span><div id="modal-player-board" class="mini-row"></div>
           </div>
         </div>
-      </section>
 
-      <div id="advanced-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="advanced-modal-title">
-        <div id="advanced-modal-backdrop" class="modal-backdrop"></div>
-        <section class="modal-panel panel">
-          <div class="modal-top">
-            <div>
-              <p class="eyebrow panel-eyebrow">ADVANCED CARD PLAY</p>
-              <h3 id="advanced-modal-title">選擇功能卡位置</h3>
-            </div>
-            <button id="close-advanced-modal-btn" class="button ghost modal-close" type="button">關閉</button>
+        <div class="modal-grid">
+          <div class="advanced-stage">
+            <span class="advanced-label">你的功能卡</span>
+            <div id="modal-player-func-hand" class="func-hand" aria-label="玩家功能卡手牌"></div>
           </div>
-
-          <p id="advanced-modal-intro" class="hint">先選 1 張功能卡，再選擇要放置的局數位置。</p>
-
-          <div class="modal-info-grid">
-            <div class="effect-block decision-block">
-              <h4>目前盤面</h4>
-              <p class="mini-label">電腦出牌序列</p>
-              <div id="modal-cpu-board" class="mini-row"></div>
-              <p class="mini-label">玩家出牌序列</p>
-              <div id="modal-player-board" class="mini-row"></div>
-            </div>
-
-            <div class="effect-block decision-block">
-              <h4>剩餘功能卡</h4>
-              <p class="mini-label">電腦仍可使用</p>
-              <div id="modal-cpu-cards-left" class="card-chip-row"></div>
-              <p class="mini-label">玩家仍可使用</p>
-              <div id="modal-player-cards-left" class="card-chip-row"></div>
-            </div>
+          <div class="advanced-stage">
+            <span class="advanced-label">放置位置</span>
+            <div id="modal-player-func-targets" class="func-targets" aria-label="功能卡放置位置"></div>
           </div>
+        </div>
+      </div>
 
-          <div class="modal-grid">
-            <div class="advanced-stage">
-              <span class="advanced-label">玩家功能卡</span>
-              <div id="modal-player-func-hand" class="func-hand" aria-label="玩家功能卡手牌"></div>
-            </div>
-
-            <div class="advanced-stage">
-              <span class="advanced-label">放置位置</span>
-              <div id="modal-player-func-targets" class="func-targets" aria-label="功能卡放置位置"></div>
-            </div>
+      <div class="modal-actions">
+        <div class="modal-action-copy">
+          <p id="modal-func-placement-summary" class="selection-summary">先選一張功能卡，再選位置。</p>
+          <div class="modal-remaining" aria-label="雙方剩餘功能卡">
+            <strong>剩餘功能卡</strong>
+            <span>電腦</span><div id="modal-cpu-cards-left" class="card-chip-row"></div>
+            <span>玩家</span><div id="modal-player-cards-left" class="card-chip-row"></div>
           </div>
-
-          <p id="modal-func-placement-summary" class="hint">先選 1 張功能卡，再選位置。</p>
-
-          <div class="modal-actions">
-            <button id="resolve-advanced-btn" class="button" type="button" disabled>確認並執行功能卡</button>
-          </div>
-        </section>
+        </div>
+        <button id="resolve-advanced-btn" class="button" type="button" disabled>確認並執行</button>
       </div>
     </section>
+  </dialog>
 
-    <aside class="side-panels">
-      <section class="panel modern-hero mode-panel">
-        <p class="eyebrow">ONE-TWO-FIVE • STRATEGY CARD GAME</p>
-        <h1 id="game-title">1-2-3-4-5 遊戲（基本規則）</h1>
-        <p id="game-subtitle" class="subtitle">大數字勝，例外：<strong>1 勝 5、2 勝 4</strong>。每張牌只能出一次。</p>
-
-        <div class="mode-switch" role="group" aria-label="模式切換">
-          <button id="mode-basic" class="button mode active" type="button">普通模式</button>
-          <button id="mode-advanced" class="button mode" type="button">進階模式</button>
-        </div>
-
-        <div class="guide-strip" aria-live="polite">
-          <span id="step-choose-mode" class="guide-step current-step">1. 選模式</span>
-          <span id="step-play-five" class="guide-step">2. 完成 5 回合</span>
-          <span id="step-resolve-card" class="guide-step">3. 結算功能卡</span>
-        </div>
-      </section>
-
-      <details class="panel fold info-panel" open>
-        <summary>目前模式說明</summary>
-        <p id="mode-note" class="panel-note">先完成 5 回合出牌，再查看每回合勝負與本局結果。</p>
-        <ol id="rules-list">
-          <li>每回合從玩家手牌出 1 張。</li>
-          <li>共 5 回合，系統會即時顯示每回合結果。</li>
-          <li>完成後可直接從主畫面重新開始。</li>
-        </ol>
-      </details>
-
-      <details class="panel fold info-panel">
-        <summary>功能卡速查</summary>
-        <ul class="card-guide">
-          <li><strong>J</strong>：指定位置與左邊交換（位置 1 會和位置 5 交換）</li>
-          <li><strong>Q</strong>：指定位置與右邊交換（位置 5 會和位置 1 交換）</li>
-          <li><strong>K</strong>：指定位置與對手同位置交換</li>
-          <li><strong>JOKER</strong>：雙方整個盤面互換</li>
-        </ul>
-        <p class="hint">觸發順序：J/Q → K → JOKER（玩家先觸發）</p>
-      </details>
-
-      <details class="panel fold info-panel">
-        <summary>本局記錄</summary>
-        <table id="round-table">
-          <thead>
-            <tr>
-              <th>回合</th>
-              <th>電腦</th>
-              <th>玩家</th>
-              <th>結果</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </details>
-
-      <details class="panel fold info-panel">
-        <summary>總比分</summary>
-        <table id="scoreboard">
-          <thead>
-            <tr>
-              <th>角色</th>
-              <th>勝</th>
-              <th>負</th>
-              <th>和</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>電腦</td>
-              <td id="cpu-win">0</td>
-              <td id="cpu-lose">0</td>
-              <td id="cpu-draw">0</td>
-            </tr>
-            <tr>
-              <td>玩家</td>
-              <td id="player-win">0</td>
-              <td id="player-lose">0</td>
-              <td id="player-draw">0</td>
-            </tr>
-          </tbody>
-        </table>
-      </details>
-    </aside>
-  </main>
-
-  <script src="12345.js"></script>
+  <script src="./12345.js"></script>
 </body>
 
 </html>

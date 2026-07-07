@@ -67,7 +67,6 @@ const afterCpu = document.getElementById("after-cpu");
 const afterPlayer = document.getElementById("after-player");
 
 const advancedModal = document.getElementById("advanced-modal");
-const advancedModalBackdrop = document.getElementById("advanced-modal-backdrop");
 const closeAdvancedModalBtn = document.getElementById("close-advanced-modal-btn");
 const advancedModalIntro = document.getElementById("advanced-modal-intro");
 const modalPlayerFuncHand = document.getElementById("modal-player-func-hand");
@@ -77,6 +76,8 @@ const modalCpuBoard = document.getElementById("modal-cpu-board");
 const modalPlayerBoard = document.getElementById("modal-player-board");
 const modalCpuCardsLeft = document.getElementById("modal-cpu-cards-left");
 const modalPlayerCardsLeft = document.getElementById("modal-player-cards-left");
+const drawerScrim = document.getElementById("drawer-scrim");
+const mobileInfoButtons = [...document.querySelectorAll("[data-panel-target]")];
 
 const modeBasicBtn = document.getElementById("mode-basic");
 const modeAdvancedBtn = document.getElementById("mode-advanced");
@@ -89,6 +90,81 @@ const infoPanels = [...document.querySelectorAll(".info-panel")];
 const stackedInfoPanels = window.matchMedia("(max-width: 1100px)");
 
 const cardText = (card) => (card === "JK" ? "JOKER" : card);
+const cardValue = (card) => (typeof card === "object" && card !== null ? card.value : card);
+const cardSource = (card, fallbackSource) =>
+  typeof card === "object" && card !== null && card.source ? card.source : fallbackSource;
+const createResolvedCard = (value, source) => ({ value, source, effects: [] });
+const cardImagePath = (side, value) =>
+  side === "player"
+    ? `./assets/cards/p1_card_${value}_spades.png`
+    : `./assets/cards/p2_card_${value}_diamond.png`;
+
+const cardAccessibleName = (side, value) => {
+  const owner = side === "player" ? "玩家黑桃" : "電腦方塊";
+  const rank = value === 1 ? "A，代表數字 1" : String(value);
+  return `${owner} ${rank}`;
+};
+
+const createPlayingCardImage = (side, value) => {
+  const image = document.createElement("img");
+  image.className = "playing-card-image";
+  image.src = cardImagePath(side, value);
+  image.alt = cardAccessibleName(side, value);
+  image.width = 1041;
+  image.height = 1458;
+  image.draggable = false;
+  return image;
+};
+
+const renderCardIntoSlot = (slot, side, card) => {
+  const value = cardValue(card);
+  const source = cardSource(card, side);
+  const hasCard = value !== undefined;
+  const effects = typeof card === "object" && card !== null ? (card.effects ?? []) : [];
+  slot.replaceChildren();
+  slot.classList.toggle("filled", hasCard);
+  slot.classList.toggle("foreign-card", hasCard && source !== side);
+  slot.classList.toggle("has-effects", effects.length > 0);
+  slot.dataset.source = hasCard ? source : "";
+  if (!hasCard) return;
+
+  slot.appendChild(createPlayingCardImage(source, value));
+  if (effects.length > 0) {
+    const stack = document.createElement("span");
+    stack.className = "card-effect-stack";
+    stack.setAttribute("aria-label", `效果執行順序：${effects.join("、")}`);
+    effects.forEach((effect, index) => {
+      const badge = document.createElement("span");
+      badge.className = "card-effect-badge";
+      badge.textContent = effect;
+      badge.title = `第 ${index + 1} 個效果：${effect}`;
+      stack.appendChild(badge);
+    });
+    slot.appendChild(stack);
+  }
+};
+
+const functionCardDetails = {
+  J: { caption: "向左交換", path: '<path d="M18 5H8a4 4 0 0 0-4 4v7m0 0 4-4m-4 4-4-4" />' },
+  Q: { caption: "向右交換", path: '<path d="M6 5h10a4 4 0 0 1 4 4v7m0 0-4-4m4 4 4-4" />' },
+  K: { caption: "上下交換", path: '<path d="M8 3 4 7l4 4M4 7h15M16 21l4-4-4-4m4 4H5" />' },
+  JK: { caption: "全盤互換", path: '<path d="M7 5h11l-3-3m3 3-3 3M17 19H6l3 3m-3-3 3-3M4 8v8m16-8v8" />' },
+};
+
+const appendFunctionCardFace = (element, card) => {
+  const details = functionCardDetails[card];
+  const symbol = document.createElement("span");
+  const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  const caption = document.createElement("span");
+  symbol.className = "func-card-symbol";
+  caption.className = "func-card-caption";
+  symbol.textContent = cardText(card);
+  caption.textContent = details.caption;
+  icon.setAttribute("viewBox", "0 0 24 24");
+  icon.setAttribute("aria-hidden", "true");
+  icon.innerHTML = details.path;
+  element.append(symbol, icon, caption);
+};
 
 const shuffle = (list) => {
   const arr = [...list];
@@ -100,6 +176,8 @@ const shuffle = (list) => {
 };
 
 const compareCards = (cpu, player) => {
+  cpu = cardValue(cpu);
+  player = cardValue(player);
   if (cpu === player) return "DRAW";
   if ((player === 1 && cpu === 5) || (player === 2 && cpu === 4)) return "WIN";
   if ((cpu === 1 && player === 5) || (cpu === 2 && player === 4)) return "LOSE";
@@ -130,9 +208,33 @@ const applyJoker = (playerDeck, cpuDeck) => {
 };
 
 const resultLabel = (result) => {
-  if (result === "WIN") return "WIN";
-  if (result === "LOSE") return "LOSE";
-  return "DRAW";
+  if (result === "WIN") return "勝";
+  if (result === "LOSE") return "負";
+  return "和";
+};
+
+const markJQSwap = (deck, card, pos) => {
+  const i = pos - 1;
+  const target = card === "J"
+    ? (i === 0 ? deck.length - 1 : i - 1)
+    : (i === deck.length - 1 ? 0 : i + 1);
+
+  [deck[i], deck[target]].forEach((playingCard) => {
+    if (typeof playingCard === "object" && playingCard !== null) playingCard.effects.push(`${card}交換`);
+  });
+};
+
+const markKSwap = (playerDeck, cpuDeck, pos) => {
+  const i = pos - 1;
+  [playerDeck[i], cpuDeck[i]].forEach((playingCard) => {
+    if (typeof playingCard === "object" && playingCard !== null) playingCard.effects.push("K交換");
+  });
+};
+
+const markJokerSwap = (playerDeck, cpuDeck) => {
+  [...playerDeck, ...cpuDeck].forEach((playingCard) => {
+    if (typeof playingCard === "object" && playingCard !== null) playingCard.effects.push("JOKER交換");
+  });
 };
 
 const isAdvancedResolutionVisible = () =>
@@ -156,6 +258,7 @@ const openAdvancedModal = () => {
 
 const closeAdvancedModal = () => {
   state.advanced.modalOpen = false;
+  if (advancedModal.open) advancedModal.close();
 };
 
 const createSlot = (className = "slot") => {
@@ -168,8 +271,12 @@ const buildSlots = () => {
   cpuArea.innerHTML = "";
   playerArea.innerHTML = "";
   for (let i = 0; i < TOTAL_ROUNDS; i += 1) {
-    cpuArea.appendChild(createSlot());
-    playerArea.appendChild(createSlot());
+    const cpuSlot = createSlot();
+    const playerSlot = createSlot();
+    cpuSlot.dataset.position = String(i + 1);
+    playerSlot.dataset.position = String(i + 1);
+    cpuArea.appendChild(cpuSlot);
+    playerArea.appendChild(playerSlot);
   }
 };
 
@@ -204,11 +311,8 @@ const renderBoardToArea = (cpuBoard, playerBoard) => {
     const cpuValue = cpuBoard[i];
     const playerValue = playerBoard[i];
 
-    cpuSlots[i].textContent = cpuValue ?? "";
-    playerSlots[i].textContent = playerValue ?? "";
-
-    cpuSlots[i].classList.toggle("filled", cpuValue !== undefined);
-    playerSlots[i].classList.toggle("filled", playerValue !== undefined);
+    renderCardIntoSlot(cpuSlots[i], "cpu", cpuValue);
+    renderCardIntoSlot(playerSlots[i], "player", playerValue);
   }
 };
 
@@ -239,13 +343,27 @@ const renderOutcomeRow = (cpuBoard, playerBoard) => {
   }
 };
 
-const renderMiniRow = (el, arr) => {
+const createMiniCardChip = (card, fallbackSource) => {
+  const chip = document.createElement("span");
+  const value = cardValue(card);
+  const source = cardSource(card, fallbackSource);
+  const suit = document.createElement("span");
+  const rank = document.createElement("span");
+
+  chip.className = `mini-chip source-${source}`;
+  suit.className = "mini-chip-suit";
+  rank.className = "mini-chip-rank";
+  suit.textContent = source === "player" ? "♠" : "♦";
+  rank.textContent = value === 1 ? "A" : String(value);
+  chip.title = cardAccessibleName(source, value);
+  chip.append(suit, rank);
+  return chip;
+};
+
+const renderMiniRow = (el, arr, fallbackSource) => {
   el.innerHTML = "";
-  arr.forEach((n) => {
-    const chip = document.createElement("span");
-    chip.className = "mini-chip";
-    chip.textContent = n;
-    el.appendChild(chip);
+  arr.forEach((card) => {
+    el.appendChild(createMiniCardChip(card, fallbackSource));
   });
 };
 
@@ -263,19 +381,23 @@ const renderEffectPanel = ({ logs, beforeCpuBoard, beforePlayerBoard, afterCpuBo
     li.textContent = msg;
     effectLog.appendChild(li);
   });
-  renderMiniRow(beforeCpu, beforeCpuBoard);
-  renderMiniRow(beforePlayer, beforePlayerBoard);
-  renderMiniRow(afterCpu, afterCpuBoard);
-  renderMiniRow(afterPlayer, afterPlayerBoard);
+  renderMiniRow(beforeCpu, beforeCpuBoard, "cpu");
+  renderMiniRow(beforePlayer, beforePlayerBoard, "player");
+  renderMiniRow(afterCpu, afterCpuBoard, "cpu");
+  renderMiniRow(afterPlayer, afterPlayerBoard, "player");
 };
 
-const renderBoardSnapshotRow = (el, arr) => {
+const renderBoardSnapshotRow = (el, arr, fallbackSource) => {
   el.innerHTML = "";
   for (let i = 0; i < TOTAL_ROUNDS; i += 1) {
-    const chip = document.createElement("span");
-    chip.className = "mini-chip";
-    chip.textContent = arr[i] ?? "-";
-    el.appendChild(chip);
+    if (arr[i] === undefined) {
+      const emptyChip = document.createElement("span");
+      emptyChip.className = "mini-chip empty";
+      emptyChip.textContent = "–";
+      el.appendChild(emptyChip);
+    } else {
+      el.appendChild(createMiniCardChip(arr[i], fallbackSource));
+    }
   }
 };
 
@@ -299,8 +421,8 @@ const renderCardChipRow = (el, cards, tone) => {
 };
 
 const renderAdvancedDecisionContext = () => {
-  renderBoardSnapshotRow(modalCpuBoard, state.cpuHistory);
-  renderBoardSnapshotRow(modalPlayerBoard, state.playerHistory);
+  renderBoardSnapshotRow(modalCpuBoard, state.cpuHistory, "cpu");
+  renderBoardSnapshotRow(modalPlayerBoard, state.playerHistory, "player");
   renderCardChipRow(modalCpuCardsLeft, state.advanced.cpuCards, "enemy");
   renderCardChipRow(modalPlayerCardsLeft, state.advanced.playerCards, "player");
 };
@@ -370,18 +492,17 @@ const renderPlayerHand = () => {
     card.className = "card";
     card.type = "button";
     card.dataset.value = String(value);
+    card.setAttribute("aria-label", `${cardAccessibleName("player", value)}，${used ? "已出牌" : "點擊出牌"}`);
+    card.appendChild(createPlayingCardImage("player", value));
 
     if (used) {
-      const valueSpan = document.createElement("span");
       const usedLabel = document.createElement("span");
-      valueSpan.textContent = value;
       usedLabel.textContent = "已出";
       usedLabel.className = "card-used-label";
       card.classList.add("used", "locked");
       card.disabled = true;
-      card.append(valueSpan, usedLabel);
+      card.appendChild(usedLabel);
     } else {
-      card.textContent = value;
       card.draggable = !locked;
       card.disabled = locked;
 
@@ -419,8 +540,7 @@ const renderPlayerHand = () => {
 
 const pushCardToArea = (area, value, roundIndex) => {
   const slots = area.querySelectorAll(".slot");
-  slots[roundIndex].textContent = value;
-  slots[roundIndex].classList.add("filled");
+  renderCardIntoSlot(slots[roundIndex], area === cpuArea ? "cpu" : "player", value);
 };
 
 const renderRoundRow = (majorRound, roundIndex, cpuValue, playerValue, result) => {
@@ -429,7 +549,7 @@ const renderRoundRow = (majorRound, roundIndex, cpuValue, playerValue, result) =
     <td>${state.mode === MODE.ADVANCED ? `${majorRound}-${roundIndex + 1}` : roundIndex + 1}</td>
     <td>${cpuValue}</td>
     <td>${playerValue}</td>
-    <td>${result}</td>
+    <td>${resultLabel(result)}</td>
   `;
   roundTableBody.appendChild(tr);
 };
@@ -457,18 +577,17 @@ const renderAdvancedFunctionHand = () => {
     cardEl.className = "card func-card";
     cardEl.type = "button";
     cardEl.dataset.card = card;
+    cardEl.setAttribute("aria-label", `${cardText(card)}：${functionCardDetails[card].caption}`);
+    appendFunctionCardFace(cardEl, card);
 
     if (used) {
-      const valueSpan = document.createElement("span");
       const usedLabel = document.createElement("span");
-      valueSpan.textContent = cardText(card);
       usedLabel.textContent = "已用";
       usedLabel.className = "card-used-label";
       cardEl.classList.add("used", "locked");
       cardEl.disabled = true;
-      cardEl.append(valueSpan, usedLabel);
+      cardEl.appendChild(usedLabel);
     } else {
-      cardEl.textContent = cardText(card);
       cardEl.classList.toggle("selected", state.advanced.selectedCard === card);
       cardEl.disabled = !canInteract;
 
@@ -596,7 +715,14 @@ const syncUiState = () => {
   }
 
   openAdvancedModalBtn.classList.toggle("hidden", !awaitingResolution);
-  advancedModal.classList.toggle("hidden", !(awaitingResolution && state.advanced.modalOpen));
+  const shouldOpenModal = awaitingResolution && state.advanced.modalOpen;
+  if (shouldOpenModal && !advancedModal.open) {
+    if (typeof advancedModal.showModal === "function") advancedModal.showModal();
+    else advancedModal.setAttribute("open", "");
+    closeAdvancedModalBtn.focus();
+  } else if (!shouldOpenModal && advancedModal.open) {
+    advancedModal.close();
+  }
 
   gameShell.classList.toggle("awaiting-resolution", awaitingResolution);
   gameShell.classList.toggle("locked", isInteractionLocked());
@@ -716,8 +842,8 @@ const settleAdvancedMajorRound = () => {
   const cpuCard = state.advanced.cpuCards[Math.floor(Math.random() * state.advanced.cpuCards.length)];
   const cpuPos = Math.floor(Math.random() * TOTAL_ROUNDS) + 1;
 
-  const playerBoard = [...state.playerHistory];
-  const cpuBoard = [...state.cpuHistory];
+  const playerBoard = state.playerHistory.map((value) => createResolvedCard(value, "player"));
+  const cpuBoard = state.cpuHistory.map((value) => createResolvedCard(value, "cpu"));
   const beforePlayerBoard = [...playerBoard];
   const beforeCpuBoard = [...cpuBoard];
   const logs = [
@@ -727,28 +853,34 @@ const settleAdvancedMajorRound = () => {
   renderFunctionPlacement(cpuCard, cpuPos, playerCard, playerPos);
 
   if (playerCard === "J" || playerCard === "Q") {
+    markJQSwap(playerBoard, playerCard, playerPos);
     applyJQ(playerBoard, playerCard, playerPos);
-    logs.push(`玩家 ${cardText(playerCard)} 先觸發，玩家盤面調整完成。`);
+    logs.push(`玩家 ${cardText(playerCard)} 先觸發，兩張換位牌已加上交換標記。`);
   }
   if (cpuCard === "J" || cpuCard === "Q") {
+    markJQSwap(cpuBoard, cpuCard, cpuPos);
     applyJQ(cpuBoard, cpuCard, cpuPos);
-    logs.push(`電腦 ${cardText(cpuCard)} 觸發，電腦盤面調整完成。`);
+    logs.push(`電腦 ${cardText(cpuCard)} 觸發，兩張換位牌已加上交換標記。`);
   }
   if (playerCard === "K") {
+    markKSwap(playerBoard, cpuBoard, playerPos);
     applyK(playerBoard, cpuBoard, playerPos);
-    logs.push(`玩家 K 觸發，交換雙方位置 ${playerPos}。`);
+    logs.push(`玩家 K 觸發，雙方位置 ${playerPos} 的實體牌與花色一併交換。`);
   }
   if (cpuCard === "K") {
+    markKSwap(playerBoard, cpuBoard, cpuPos);
     applyK(playerBoard, cpuBoard, cpuPos);
-    logs.push(`電腦 K 觸發，交換雙方位置 ${cpuPos}。`);
+    logs.push(`電腦 K 觸發，雙方位置 ${cpuPos} 的實體牌與花色一併交換。`);
   }
   if (playerCard === "JK") {
+    markJokerSwap(playerBoard, cpuBoard);
     applyJoker(playerBoard, cpuBoard);
-    logs.push("玩家 JOKER 觸發，雙方整體盤面互換。");
+    logs.push("玩家 JOKER 觸發，雙方整排牌連同花色互換。");
   }
   if (cpuCard === "JK") {
+    markJokerSwap(playerBoard, cpuBoard);
     applyJoker(playerBoard, cpuBoard);
-    logs.push("電腦 JOKER 觸發，雙方整體盤面互換。");
+    logs.push("電腦 JOKER 觸發，雙方整排牌連同花色互換。");
   }
 
   renderBoardToArea(cpuBoard, playerBoard);
@@ -899,20 +1031,23 @@ const setMode = (mode) => {
 
   modeBasicBtn.classList.toggle("active", !isAdvanced);
   modeAdvancedBtn.classList.toggle("active", isAdvanced);
+  modeBasicBtn.setAttribute("aria-pressed", String(!isAdvanced));
+  modeAdvancedBtn.setAttribute("aria-pressed", String(isAdvanced));
 
   if (isAdvanced) {
-    gameTitle.textContent = "1-2-3-4-5 遊戲（進階規則）";
+    gameTitle.textContent = "1・2・3・4・5";
     gameSubtitle.innerHTML =
-      "先完成 5 回合，再用 <strong>J / Q / K / JOKER</strong> 改變盤面，最後比較大局與小分。";
+      "完成五回合，再用 <strong>J／Q／K／JOKER</strong> 改寫盤面。功能牌整場各限一次。";
     modeNote.textContent = "每大局先完成 5 回合，再進入功能卡結算；功能卡整場各只能使用一次。";
     rulesList.innerHTML = `
       <li>每大局先完成 5 回合出牌，所有數字仍不可重複。</li>
       <li>第 5 回合後會跳出功能卡視窗，選 1 張功能卡與要放置的位置。</li>
+      <li>K 與 JOKER 會讓實體牌連同黑桃／方塊花色移動，牌所在列即為結算歸屬。</li>
       <li>三大局內比分高者勝；若平手則比較加開局與小分。</li>
     `;
   } else {
-    gameTitle.textContent = "1-2-3-4-5 遊戲（基本規則）";
-    gameSubtitle.innerHTML = "大數字勝，例外：<strong>1 勝 5、2 勝 4</strong>。每張牌只能出一次。";
+    gameTitle.textContent = "1・2・3・4・5";
+    gameSubtitle.innerHTML = "大數字勝，唯有 <strong>1 勝 5、2 勝 4</strong>。五張牌，五次抉擇。";
     modeNote.textContent = "先完成 5 回合出牌，再查看每回合勝負與本局結果。";
     rulesList.innerHTML = `
       <li>每回合從玩家手牌出 1 張，五個數字各用一次。</li>
@@ -957,6 +1092,38 @@ infoPanels.forEach((panel) => {
   });
 });
 
+const closeMobileInfoPanel = () => {
+  infoPanels.forEach((panel) => panel.classList.remove("mobile-open"));
+  mobileInfoButtons.forEach((button) => {
+    button.classList.remove("active");
+    button.setAttribute("aria-expanded", "false");
+  });
+  drawerScrim.classList.add("hidden");
+};
+
+const toggleMobileInfoPanel = (button) => {
+  const panel = document.getElementById(button.dataset.panelTarget);
+  const willOpen = !panel.classList.contains("mobile-open");
+  closeMobileInfoPanel();
+  if (!willOpen) return;
+
+  panel.open = true;
+  panel.classList.add("mobile-open");
+  button.classList.add("active");
+  button.setAttribute("aria-expanded", "true");
+  drawerScrim.classList.remove("hidden");
+  panel.querySelector("summary").focus();
+};
+
+mobileInfoButtons.forEach((button) => {
+  const panelId = button.dataset.panelTarget;
+  button.setAttribute("aria-controls", panelId);
+  button.setAttribute("aria-expanded", "false");
+  button.addEventListener("click", () => toggleMobileInfoPanel(button));
+});
+
+drawerScrim.addEventListener("click", closeMobileInfoPanel);
+
 document.getElementById("restart-btn").addEventListener("click", resetMatch);
 openAdvancedModalBtn.addEventListener("click", () => {
   openAdvancedModal();
@@ -966,7 +1133,21 @@ closeAdvancedModalBtn.addEventListener("click", () => {
   closeAdvancedModal();
   syncUiState();
 });
-advancedModalBackdrop.addEventListener("click", () => {
+advancedModal.addEventListener("click", (event) => {
+  if (event.target !== advancedModal) return;
+  const panelBounds = advancedModal.querySelector(".modal-panel").getBoundingClientRect();
+  const clickedOutside =
+    event.clientX < panelBounds.left ||
+    event.clientX > panelBounds.right ||
+    event.clientY < panelBounds.top ||
+    event.clientY > panelBounds.bottom;
+  if (clickedOutside) {
+    closeAdvancedModal();
+    syncUiState();
+  }
+});
+advancedModal.addEventListener("cancel", (event) => {
+  event.preventDefault();
   closeAdvancedModal();
   syncUiState();
 });
@@ -979,6 +1160,8 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && state.advanced.modalOpen) {
     closeAdvancedModal();
     syncUiState();
+  } else if (event.key === "Escape") {
+    closeMobileInfoPanel();
   }
 });
 
