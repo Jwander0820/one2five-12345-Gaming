@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>1-2-3-4-5 策略卡牌遊戲</title>
+  <rect width="64" height="64" rx="14" fill="#08251f"/>
+  <g stroke="#d8b45f" stroke-width="2.2" stroke-linejoin="round">
+    <g transform="rotate(-32 32 51)">
+      <rect x="21.5" y="11" width="21" height="40" rx="3" fill="#fff8ec"/>
+      <text x="26" y="21" fill="#12382f" stroke="none" font-family="ui-monospace, monospace" font-size="9.5" font-weight="800" text-anchor="middle">1</text>
+    </g>
+    <g transform="rotate(-16 32 51)">
+      <rect x="21.5" y="11" width="21" height="40" rx="3" fill="#fff8ec"/>
+      <text x="26" y="21" fill="#12382f" stroke="none" font-family="ui-monospace, monospace" font-size="9.5" font-weight="800" text-anchor="middle">2</text>
+    </g>
+    <g>
+      <rect x="21.5" y="11" width="21" height="40" rx="3" fill="#fff8ec"/>
+      <text x="26" y="21" fill="#12382f" stroke="none" font-family="ui-monospace, monospace" font-size="9.5" font-weight="800" text-anchor="middle">3</text>
+    </g>
+    <g transform="rotate(16 32 51)">
+      <rect x="21.5" y="11" width="21" height="40" rx="3" fill="#fff8ec"/>
+      <text x="26" y="21" fill="#12382f" stroke="none" font-family="ui-monospace, monospace" font-size="9.5" font-weight="800" text-anchor="middle">4</text>
+    </g>
+    <g transform="rotate(32 32 51)">
+      <rect x="21.5" y="11" width="21" height="40" rx="3" fill="#fff8ec"/>
+      <text x="26" y="21" fill="#b93832" stroke="none" font-family="ui-monospace, monospace" font-size="9.5" font-weight="800" text-anchor="middle">5</text>
+    </g>
+  </g>
+</svg>
