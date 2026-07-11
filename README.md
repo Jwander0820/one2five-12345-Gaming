@@ -10,25 +10,34 @@
 * 但 2 勝過 4
 
 
-基本規則的遊戲
+## 遊玩方式
 
-0. 使用Github Pages部屬的靜態網頁!
+直接開啟 GitHub Pages 靜態網頁：
 https://jwander0820.github.io/one2five-12345-Gaming/
 
-1. 每回合從玩家手牌中選 1 張牌（點擊或拖曳）。
-2. 連續出完 5 張牌後看本局結果。
-3. 按 `Restart` 再開新局，總比分會累積。
+1. 選擇普通或進階模式，以及電腦難度。
+2. 每回合從玩家手牌中選 1 張牌（點擊或拖曳）。
+3. 連續出完 5 張牌後查看本局結果；進階模式還需選擇功能卡與放置位置。
+4. 按「重新開始」再開新局；本次頁面開啟期間的總比分會繼續累積。
 
+## 電腦出牌策略
 
-2. Python環境
-```Python
-from one2five_Gaming import *
-GAME12345().BaseRule()
+網頁版的電腦採用規則式隨機策略，普通與進階模式皆可選擇初階、中階或高階。策略會評估剩餘牌、目前比分與後續盤面，再加入常態分布雜訊，避免出牌順序完全固定。
+
+完整對局後，頁面會在瀏覽器本機統計玩家各回合的出牌習慣；資料不會上傳，可從戰績面板清除。正式網站仍是純 GitHub Pages，不需要執行中的 Python 後端。
+
+策略與難度參數集中在 `backend/computer_strategy.py`。部署或本機預覽前可重新產生靜態策略設定：
+
+```powershell
+python backend/computer_strategy.py --export frontend/assets/generated
 ```
 
-3. Windows EXE 
+演算法勝率不透過 UI 判定；可直接用 Python 執行無畫面對局。以下指令會分別模擬普通／進階模式，以及隨機／固定習慣對手，並輸出三種難度的 JSON 報告：
 
-    windows系統下可以執行 **one2five_Gaming_BaseRule.exe**
+```powershell
+python backend/computer_strategy.py --simulate 10000 --benchmark suite --seed 12345 --report strategy-report.json
+```
+
 
 ## 細則
 1 勝過 5 <br> 
@@ -54,19 +63,11 @@ GAME12345().BaseRule()
 ***
 
 # 進階規則
-1. 以基本規則為基礎，**一局的流程為一輪基本規則+雙方比拚功能卡**，共三大局，三局內比分高者勝利
+1. 以基本規則為基礎，**一個大局的流程為一輪基本規則加上雙方比拚功能卡**；一場最多進行三大局，先取得兩個大局勝場者獲勝
 
 2. **四種不同功能卡在遊戲中僅能各使用一次，選定功能卡放置在指定位置上發動效果**
 
-3. 若三局雙方比分相同則加開第四局，若再和局則往下比較小局賽點分數總和，比分高者勝利
-
-
-進階規則的遊戲
-```
-from one2five_Gaming import *
-GAME12345().AdvanceRule()
-```
-或是在windows系統下可以執行 **one2five_Gaming_AdvancedRule.exe**
+3. 若三大局結束後雙方的大局比分相同，則加開第四大局；若仍同分，再比較整場小局勝場總和，較高者獲勝
 
 ## 功能卡說明
 **新增 J、Q、K、JOKER 四張功能卡**

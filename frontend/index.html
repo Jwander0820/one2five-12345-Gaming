@@ -29,6 +29,20 @@
             <span>進階</span><small>加入功能卡</small>
           </button>
         </div>
+        <div class="difficulty-control">
+          <span class="difficulty-label"><i aria-hidden="true"></i>電腦難度</span>
+          <div class="difficulty-switch" role="group" aria-label="選擇電腦難度">
+            <button class="difficulty-button" type="button" data-difficulty="beginner" aria-pressed="false">
+              <span>初</span><small>隨性</small>
+            </button>
+            <button class="difficulty-button active" type="button" data-difficulty="intermediate" aria-pressed="true">
+              <span>中</span><small>權衡</small>
+            </button>
+            <button class="difficulty-button" type="button" data-difficulty="expert" aria-pressed="false">
+              <span>高</span><small>推演</small>
+            </button>
+          </div>
+        </div>
         <button id="restart-btn" class="icon-button" type="button" aria-label="重新開始目前對局">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v6h6M5.6 15.5A7.5 7.5 0 1 0 6 7.5L4 10" /></svg>
           <span>重新開始</span>
@@ -186,6 +200,13 @@
                 <tr><td>♠ 玩家</td><td id="player-win">0</td><td id="player-lose">0</td><td id="player-draw">0</td></tr>
               </tbody>
             </table>
+            <div class="strategy-memory">
+              <div>
+                <strong>出牌觀察</strong>
+                <span id="observation-status">尚未累積完整對局。</span>
+              </div>
+              <button id="clear-observations-btn" type="button">清除觀察紀錄</button>
+            </div>
           </div>
         </details>
       </aside>
@@ -246,6 +267,8 @@
     </section>
   </dialog>
 
+  <script src="./assets/generated/computer-strategy-policy.js"></script>
+  <script src="./computer_strategy.js"></script>
   <script src="./12345.js"></script>
 </body>
 

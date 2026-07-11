@@ -25,6 +25,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify strategy
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: Run headless strategy benchmark
+        run: python backend/computer_strategy.py --simulate 1000 --benchmark suite --seed 12345
+
+      - name: Generate static strategy policy
+        run: python backend/computer_strategy.py --export frontend/assets/generated
+
+      - name: Verify browser strategy runtime
+        run: node tests/test_computer_strategy_runtime.js
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 

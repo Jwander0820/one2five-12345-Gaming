@@ -5,10 +5,27 @@ const MODE = {
 };
 const CARD_LABELS = ["J", "Q", "K", "JK"];
 const PLAYER_CARD_VALUES = [1, 2, 3, 4, 5];
+const DIFFICULTY = {
+  BEGINNER: "beginner",
+  INTERMEDIATE: "intermediate",
+  EXPERT: "expert",
+};
+const DIFFICULTY_STORAGE_KEY = "one2five.difficulty.v1";
+
+const loadDifficulty = () => {
+  try {
+    const stored = window.localStorage.getItem(DIFFICULTY_STORAGE_KEY);
+    return Object.values(DIFFICULTY).includes(stored) ? stored : DIFFICULTY.INTERMEDIATE;
+  } catch (_error) {
+    return DIFFICULTY.INTERMEDIATE;
+  }
+};
 
 const state = {
   mode: MODE.BASIC,
+  difficulty: loadDifficulty(),
   cpuDeck: [],
+  pendingCpuCard: null,
   playerDeck: [...PLAYER_CARD_VALUES],
   cpuHistory: [],
   playerHistory: [],
@@ -27,6 +44,7 @@ const state = {
     modalOpen: false,
     awaitingNext: false,
     matchFinished: false,
+    pendingCpuAction: null,
   },
 };
 
@@ -81,6 +99,9 @@ const mobileInfoButtons = [...document.querySelectorAll("[data-panel-target]")];
 
 const modeBasicBtn = document.getElementById("mode-basic");
 const modeAdvancedBtn = document.getElementById("mode-advanced");
+const difficultyButtons = [...document.querySelectorAll("[data-difficulty]")];
+const clearObservationsBtn = document.getElementById("clear-observations-btn");
+const observationStatus = document.getElementById("observation-status");
 
 const stepChooseMode = document.getElementById("step-choose-mode");
 const stepPlayFive = document.getElementById("step-play-five");
@@ -166,15 +187,6 @@ const appendFunctionCardFace = (element, card) => {
   element.append(symbol, icon, caption);
 };
 
-const shuffle = (list) => {
-  const arr = [...list];
-  for (let i = arr.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-};
-
 const compareCards = (cpu, player) => {
   cpu = cardValue(cpu);
   player = cardValue(player);
@@ -182,6 +194,75 @@ const compareCards = (cpu, player) => {
   if ((player === 1 && cpu === 5) || (player === 2 && cpu === 4)) return "WIN";
   if ((cpu === 1 && player === 5) || (cpu === 2 && player === 4)) return "LOSE";
   return player > cpu ? "WIN" : "LOSE";
+};
+
+const strategyAvailable = () => window.ComputerStrategy?.available === true;
+const randomChoice = (list) => list[Math.floor(Math.random() * list.length)];
+
+const difficultyLabel = (difficulty = state.difficulty) => ({
+  [DIFFICULTY.BEGINNER]: "初階",
+  [DIFFICULTY.INTERMEDIATE]: "中階",
+  [DIFFICULTY.EXPERT]: "高階",
+})[difficulty];
+
+const updateObservationStatus = () => {
+  if (!observationStatus) return;
+  if (!strategyAvailable()) {
+    observationStatus.textContent = "策略檔未載入，目前使用隨機出牌。";
+    return;
+  }
+  const summary = window.ComputerStrategy.getObservationSummary();
+  const total = summary.basic + summary.advanced;
+  observationStatus.textContent = total === 0
+    ? "尚未累積完整對局。"
+    : `已觀察普通 ${summary.basic} 局、進階 ${summary.advanced} 大局；資料只留在此瀏覽器。`;
+};
+
+const prepareComputerNumberCard = () => {
+  if (state.cpuDeck.length === 0 || state.playerDeck.length === 0) {
+    state.pendingCpuCard = null;
+    return;
+  }
+  const { playerWins, cpuWins } = countBoardResult(state.cpuHistory, state.playerHistory);
+  const strategicCard = strategyAvailable()
+    ? window.ComputerStrategy.chooseNumberCard({
+        cpuRemaining: state.cpuDeck,
+        playerRemaining: state.playerDeck,
+        scoreDiff: cpuWins - playerWins,
+        roundIndex: state.playerHistory.length,
+        difficulty: state.difficulty,
+        mode: state.mode,
+      })
+    : null;
+  state.pendingCpuCard = state.cpuDeck.includes(strategicCard)
+    ? strategicCard
+    : randomChoice(state.cpuDeck);
+};
+
+const prepareComputerFunctionAction = () => {
+  if (state.mode !== MODE.ADVANCED || state.advanced.cpuCards.length === 0) {
+    state.advanced.pendingCpuAction = null;
+    return;
+  }
+  const strategicAction = strategyAvailable()
+    ? window.ComputerStrategy.chooseFunctionAction({
+        cpuBoard: state.cpuHistory,
+        playerBoard: state.playerHistory,
+        cpuCards: state.advanced.cpuCards,
+        playerCards: state.advanced.playerCards,
+        cpuMajorScore: state.advanced.majorScore.cpu,
+        difficulty: state.difficulty,
+        mode: MODE.ADVANCED,
+      })
+    : null;
+  const isLegal = strategicAction
+    && state.advanced.cpuCards.includes(strategicAction.card)
+    && Number.isInteger(strategicAction.position)
+    && strategicAction.position >= 1
+    && strategicAction.position <= TOTAL_ROUNDS;
+  state.advanced.pendingCpuAction = isLegal
+    ? strategicAction
+    : { card: randomChoice(state.advanced.cpuCards), position: Math.floor(Math.random() * TOTAL_ROUNDS) + 1 };
 };
 
 const applyJQ = (deck, card, pos) => {
@@ -748,10 +829,12 @@ const syncUiState = () => {
 };
 
 const resetRound = () => {
-  state.cpuDeck = shuffle(PLAYER_CARD_VALUES);
+  state.cpuDeck = [...PLAYER_CARD_VALUES];
   state.playerDeck = [...PLAYER_CARD_VALUES];
   state.cpuHistory = [];
   state.playerHistory = [];
+  state.pendingCpuCard = null;
+  state.advanced.pendingCpuAction = null;
   state.advanced.awaitingNext = false;
   clearAdvancedSelection();
 
@@ -765,6 +848,7 @@ const resetRound = () => {
   updateGuide();
   renderAdvancedCardOptions();
   syncUiState();
+  prepareComputerNumberCard();
 };
 
 const finalizeAdvancedMatch = () => {
@@ -839,8 +923,13 @@ const settleAdvancedMajorRound = () => {
   const playerPos = state.advanced.selectedPos;
   if (!playerCard || !playerPos || !state.advanced.playerCards.includes(playerCard)) return;
 
-  const cpuCard = state.advanced.cpuCards[Math.floor(Math.random() * state.advanced.cpuCards.length)];
-  const cpuPos = Math.floor(Math.random() * TOTAL_ROUNDS) + 1;
+  const cpuAction = state.advanced.pendingCpuAction ?? {
+    card: randomChoice(state.advanced.cpuCards),
+    position: Math.floor(Math.random() * TOTAL_ROUNDS) + 1,
+  };
+  const cpuCard = cpuAction.card;
+  const cpuPos = cpuAction.position;
+  state.advanced.pendingCpuAction = null;
 
   const playerBoard = state.playerHistory.map((value) => createResolvedCard(value, "player"));
   const cpuBoard = state.cpuHistory.map((value) => createResolvedCard(value, "cpu"));
@@ -896,6 +985,12 @@ const settleAdvancedMajorRound = () => {
   else if (playerWins < cpuWins) state.advanced.majorScore.cpu += 1;
   else state.advanced.majorScore.draw += 1;
 
+  if (strategyAvailable()) {
+    window.ComputerStrategy.recordNumberSequence(MODE.ADVANCED, state.playerHistory);
+    window.ComputerStrategy.recordFunctionAction(MODE.ADVANCED, playerCard, playerPos);
+    updateObservationStatus();
+  }
+
   state.advanced.playerCards = state.advanced.playerCards.filter((card) => card !== playerCard);
   state.advanced.cpuCards = state.advanced.cpuCards.filter((card) => card !== cpuCard);
   clearAdvancedSelection();
@@ -934,6 +1029,11 @@ const settleAdvancedMajorRound = () => {
 const finalizeBasicGame = () => {
   const { playerWins, cpuWins } = countBoardResult(state.cpuHistory, state.playerHistory);
 
+  if (strategyAvailable()) {
+    window.ComputerStrategy.recordNumberSequence(MODE.BASIC, state.playerHistory);
+    updateObservationStatus();
+  }
+
   if (playerWins > cpuWins) {
     finalResult.textContent = `本局結束：玩家勝利（${playerWins}:${cpuWins}）`;
     finalResult.className = "final-result win";
@@ -961,11 +1061,15 @@ const playRound = (playerValue) => {
   if (!state.playerDeck.includes(playerValue) || state.playerHistory.length >= TOTAL_ROUNDS) return;
 
   const roundIndex = state.playerHistory.length;
-  const cpuValue = state.cpuDeck[roundIndex];
+  const cpuValue = state.cpuDeck.includes(state.pendingCpuCard)
+    ? state.pendingCpuCard
+    : randomChoice(state.cpuDeck);
 
   state.playerHistory.push(playerValue);
   state.cpuHistory.push(cpuValue);
   state.playerDeck = state.playerDeck.filter((v) => v !== playerValue);
+  state.cpuDeck = state.cpuDeck.filter((v) => v !== cpuValue);
+  state.pendingCpuCard = null;
 
   pushCardToArea(cpuArea, cpuValue, roundIndex);
   pushCardToArea(playerArea, playerValue, roundIndex);
@@ -983,16 +1087,20 @@ const playRound = (playerValue) => {
     if (state.mode === MODE.BASIC) {
       finalizeBasicGame();
     } else {
+      prepareComputerFunctionAction();
       openAdvancedModal();
       setHint("功能卡視窗已開啟，現在請選擇功能卡與位置。");
       advancedStatus.textContent = "請在彈出視窗中選擇功能卡與放置位置。";
       renderAdvancedCardOptions();
       syncUiState();
     }
-  } else if (state.mode === MODE.ADVANCED) {
-    setHint(`現在請完成第 ${state.advanced.majorRound} 大局的下一回合。`);
   } else {
-    setHint("現在請選下一張數字牌。");
+    prepareComputerNumberCard();
+    if (state.mode === MODE.ADVANCED) {
+      setHint(`現在請完成第 ${state.advanced.majorRound} 大局的下一回合。`);
+    } else {
+      setHint("現在請選下一張數字牌。");
+    }
   }
 };
 
@@ -1012,6 +1120,7 @@ const resetMatch = () => {
     clearAdvancedSelection();
     state.advanced.awaitingNext = false;
     state.advanced.matchFinished = false;
+    state.advanced.pendingCpuAction = null;
     advancedStatus.textContent = "完成 5 小局後，系統會跳出功能卡視窗。";
     setHint("現在請完成第 1 大局的 5 回合出牌。");
   } else {
@@ -1023,6 +1132,10 @@ const resetMatch = () => {
   renderAdvancedCardOptions();
   updateAdvancedDashboard();
   syncUiState();
+  updateObservationStatus();
+  if (!strategyAvailable()) {
+    setHint("策略檔未載入，目前已切換為隨機出牌；遊戲仍可正常進行。");
+  }
 };
 
 const setMode = (mode) => {
@@ -1057,6 +1170,26 @@ const setMode = (mode) => {
   }
 
   resetMatch();
+};
+
+const setDifficulty = (difficulty, restart = true) => {
+  if (!Object.values(DIFFICULTY).includes(difficulty)) return;
+  const changed = state.difficulty !== difficulty;
+  state.difficulty = difficulty;
+  difficultyButtons.forEach((button) => {
+    const active = button.dataset.difficulty === difficulty;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  try {
+    window.localStorage.setItem(DIFFICULTY_STORAGE_KEY, difficulty);
+  } catch (_error) {
+    // The game remains fully playable when browser storage is unavailable.
+  }
+  if (restart && changed) {
+    resetMatch();
+    setHint(`已切換為${difficultyLabel()}電腦，並重新開始本場對局。`);
+  }
 };
 
 playerArea.addEventListener("dragenter", (event) => {
@@ -1155,6 +1288,18 @@ resolveAdvancedBtn.addEventListener("click", settleAdvancedMajorRound);
 nextMajorBtn.addEventListener("click", startNextMajorRound);
 modeBasicBtn.addEventListener("click", () => setMode(MODE.BASIC));
 modeAdvancedBtn.addEventListener("click", () => setMode(MODE.ADVANCED));
+difficultyButtons.forEach((button) => {
+  button.addEventListener("click", () => setDifficulty(button.dataset.difficulty));
+});
+clearObservationsBtn.addEventListener("click", () => {
+  if (!strategyAvailable()) {
+    updateObservationStatus();
+    return;
+  }
+  window.ComputerStrategy.clearObservations();
+  updateObservationStatus();
+  setHint("已清除電腦在此瀏覽器累積的出牌觀察紀錄。現有對局不受影響。");
+});
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && state.advanced.modalOpen) {
@@ -1165,5 +1310,6 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
+setDifficulty(state.difficulty, false);
 setMode(MODE.BASIC);
 updateScoreboardView();
