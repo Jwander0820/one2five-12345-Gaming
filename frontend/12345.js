@@ -48,6 +48,8 @@ const state = {
   },
 };
 
+let pendingDifficulty = null;
+
 const gameShell = document.getElementById("game-shell");
 const cpuArea = document.getElementById("cpu-area");
 const playerArea = document.getElementById("player-area");
@@ -90,8 +92,12 @@ const advancedModalIntro = document.getElementById("advanced-modal-intro");
 const modalPlayerFuncHand = document.getElementById("modal-player-func-hand");
 const modalPlayerFuncTargets = document.getElementById("modal-player-func-targets");
 const modalFuncPlacementSummary = document.getElementById("modal-func-placement-summary");
-const modalCpuBoard = document.getElementById("modal-cpu-board");
-const modalPlayerBoard = document.getElementById("modal-player-board");
+const modalCurrentBoard = document.getElementById("modal-current-board");
+const modalCurrentScore = document.getElementById("modal-current-score");
+const modalPreviewPanel = document.getElementById("modal-preview-panel");
+const modalPreviewBoard = document.getElementById("modal-preview-board");
+const modalPreviewScore = document.getElementById("modal-preview-score");
+const modalPreviewNote = document.getElementById("modal-preview-note");
 const modalCpuCardsLeft = document.getElementById("modal-cpu-cards-left");
 const modalPlayerCardsLeft = document.getElementById("modal-player-cards-left");
 const drawerScrim = document.getElementById("drawer-scrim");
@@ -100,6 +106,10 @@ const mobileInfoButtons = [...document.querySelectorAll("[data-panel-target]")];
 const modeBasicBtn = document.getElementById("mode-basic");
 const modeAdvancedBtn = document.getElementById("mode-advanced");
 const difficultyButtons = [...document.querySelectorAll("[data-difficulty]")];
+const difficultyConfirmDialog = document.getElementById("difficulty-confirm-dialog");
+const difficultyConfirmCopy = document.getElementById("difficulty-confirm-copy");
+const cancelDifficultyBtn = document.getElementById("cancel-difficulty-btn");
+const confirmDifficultyBtn = document.getElementById("confirm-difficulty-btn");
 const clearObservationsBtn = document.getElementById("clear-observations-btn");
 const observationStatus = document.getElementById("observation-status");
 
@@ -200,9 +210,9 @@ const strategyAvailable = () => window.ComputerStrategy?.available === true;
 const randomChoice = (list) => list[Math.floor(Math.random() * list.length)];
 
 const difficultyLabel = (difficulty = state.difficulty) => ({
-  [DIFFICULTY.BEGINNER]: "初階",
-  [DIFFICULTY.INTERMEDIATE]: "中階",
-  [DIFFICULTY.EXPERT]: "高階",
+  [DIFFICULTY.BEGINNER]: "輕鬆",
+  [DIFFICULTY.INTERMEDIATE]: "標準",
+  [DIFFICULTY.EXPERT]: "挑戰",
 })[difficulty];
 
 const updateObservationStatus = () => {
@@ -468,18 +478,81 @@ const renderEffectPanel = ({ logs, beforeCpuBoard, beforePlayerBoard, afterCpuBo
   renderMiniRow(afterPlayer, afterPlayerBoard, "player");
 };
 
-const renderBoardSnapshotRow = (el, arr, fallbackSource) => {
-  el.innerHTML = "";
-  for (let i = 0; i < TOTAL_ROUNDS; i += 1) {
-    if (arr[i] === undefined) {
-      const emptyChip = document.createElement("span");
-      emptyChip.className = "mini-chip empty";
-      emptyChip.textContent = "–";
-      el.appendChild(emptyChip);
-    } else {
-      el.appendChild(createMiniCardChip(arr[i], fallbackSource));
-    }
+const createLanePreviewCard = (card, fallbackSource) => {
+  const slot = document.createElement("div");
+  slot.className = `lane-preview-card ${fallbackSource}`;
+
+  if (card === undefined) {
+    slot.classList.add("empty");
+    slot.textContent = "–";
+    return slot;
   }
+
+  const source = cardSource(card, fallbackSource);
+  const image = createPlayingCardImage(source, cardValue(card));
+  image.alt = "";
+  image.setAttribute("aria-hidden", "true");
+  slot.classList.add(`source-${source}`);
+  slot.appendChild(image);
+  return slot;
+};
+
+const renderLanePreview = (el, cpuBoard, playerBoard) => {
+  el.innerHTML = "";
+
+  for (let i = 0; i < TOTAL_ROUNDS; i += 1) {
+    const lane = document.createElement("article");
+    const index = document.createElement("span");
+    const outcome = document.createElement("span");
+    const cpuCard = cpuBoard[i];
+    const playerCard = playerBoard[i];
+    const complete = cpuCard !== undefined && playerCard !== undefined;
+
+    lane.className = "lane-preview";
+    index.className = "lane-preview-index";
+    outcome.className = "lane-preview-outcome";
+    index.textContent = `第 ${i + 1} 局`;
+
+    if (complete) {
+      const result = compareCards(cpuCard, playerCard);
+      const label = resultLabel(result);
+      const cpuName = cardAccessibleName(cardSource(cpuCard, "cpu"), cardValue(cpuCard));
+      const playerName = cardAccessibleName(cardSource(playerCard, "player"), cardValue(playerCard));
+      outcome.textContent = label;
+      outcome.classList.add(result.toLowerCase());
+      lane.setAttribute("aria-label", `第 ${i + 1} 局，${cpuName}，${playerName}，玩家${label}`);
+    } else {
+      outcome.textContent = "待定";
+      outcome.classList.add("waiting");
+      lane.setAttribute("aria-label", `第 ${i + 1} 局，等待選擇功能卡與位置`);
+    }
+
+    lane.append(
+      index,
+      createLanePreviewCard(cpuCard, "cpu"),
+      outcome,
+      createLanePreviewCard(playerCard, "player"),
+    );
+    el.appendChild(lane);
+  }
+};
+
+const formatBoardScore = (cpuBoard, playerBoard) => {
+  const complete = cpuBoard.length === TOTAL_ROUNDS && playerBoard.length === TOTAL_ROUNDS;
+  if (!complete) return "等待完成五回合";
+  const { playerWins, cpuWins, draws } = countBoardResult(cpuBoard, playerBoard);
+  return `玩家 ${playerWins}：${cpuWins} 電腦${draws ? ` · 和 ${draws}` : ""}`;
+};
+
+const resolvePlayerTacticPreview = (card, pos) => {
+  const cpuBoard = state.cpuHistory.map((value) => createResolvedCard(cardValue(value), cardSource(value, "cpu")));
+  const playerBoard = state.playerHistory.map((value) => createResolvedCard(cardValue(value), cardSource(value, "player")));
+
+  if (card === "J" || card === "Q") applyJQ(playerBoard, card, pos);
+  if (card === "K") applyK(playerBoard, cpuBoard, pos);
+  if (card === "JK") applyJoker(playerBoard, cpuBoard);
+
+  return { cpuBoard, playerBoard };
 };
 
 const renderCardChipRow = (el, cards, tone) => {
@@ -502,10 +575,26 @@ const renderCardChipRow = (el, cards, tone) => {
 };
 
 const renderAdvancedDecisionContext = () => {
-  renderBoardSnapshotRow(modalCpuBoard, state.cpuHistory, "cpu");
-  renderBoardSnapshotRow(modalPlayerBoard, state.playerHistory, "player");
+  renderLanePreview(modalCurrentBoard, state.cpuHistory, state.playerHistory);
+  modalCurrentScore.textContent = formatBoardScore(state.cpuHistory, state.playerHistory);
   renderCardChipRow(modalCpuCardsLeft, state.advanced.cpuCards, "enemy");
   renderCardChipRow(modalPlayerCardsLeft, state.advanced.playerCards, "player");
+
+  const { selectedCard, selectedPos } = state.advanced;
+  if (!selectedCard || !selectedPos) {
+    modalPreviewPanel.classList.add("pending");
+    modalPreviewScore.textContent = "等待選擇";
+    modalPreviewNote.textContent = "選好功能卡與位置後顯示；正式結算仍會受到電腦功能牌影響。";
+    renderLanePreview(modalPreviewBoard, [], []);
+    return;
+  }
+
+  const preview = resolvePlayerTacticPreview(selectedCard, selectedPos);
+  modalPreviewPanel.classList.remove("pending");
+  modalPreviewScore.textContent = formatBoardScore(preview.cpuBoard, preview.playerBoard);
+  modalPreviewNote.textContent =
+    `${cardText(selectedCard)} 作用於位置 ${selectedPos}；僅預演你的功能牌，正式結算仍會受到電腦功能牌影響。`;
+  renderLanePreview(modalPreviewBoard, preview.cpuBoard, preview.playerBoard);
 };
 
 const setStepState = (el, { active = false, done = false }) => {
@@ -806,6 +895,7 @@ const syncUiState = () => {
   }
 
   gameShell.classList.toggle("awaiting-resolution", awaitingResolution);
+  gameShell.classList.toggle("resolution-visible", resolutionVisible);
   gameShell.classList.toggle("locked", isInteractionLocked());
   playerHand.classList.toggle("locked", isInteractionLocked());
   playerArea.classList.toggle("locked", isInteractionLocked());
@@ -1149,8 +1239,7 @@ const setMode = (mode) => {
 
   if (isAdvanced) {
     gameTitle.textContent = "1・2・3・4・5";
-    gameSubtitle.innerHTML =
-      "完成五回合，再用 <strong>J／Q／K／JOKER</strong> 改寫盤面。功能牌整場各限一次。";
+    gameSubtitle.textContent = "完成五回合，再用功能牌改寫盤面並完成結算。";
     modeNote.textContent = "每大局先完成 5 回合，再進入功能卡結算；功能卡整場各只能使用一次。";
     rulesList.innerHTML = `
       <li>每大局先完成 5 回合出牌，所有數字仍不可重複。</li>
@@ -1160,7 +1249,7 @@ const setMode = (mode) => {
     `;
   } else {
     gameTitle.textContent = "1・2・3・4・5";
-    gameSubtitle.innerHTML = "大數字勝，唯有 <strong>1 勝 5、2 勝 4</strong>。五張牌，五次抉擇。";
+    gameSubtitle.textContent = "完成五回合，依規則比較每路勝負與本局結果。";
     modeNote.textContent = "先完成 5 回合出牌，再查看每回合勝負與本局結果。";
     rulesList.innerHTML = `
       <li>每回合從玩家手牌出 1 張，五個數字各用一次。</li>
@@ -1172,9 +1261,19 @@ const setMode = (mode) => {
   resetMatch();
 };
 
+const matchHasProgress = () =>
+  state.playerHistory.length > 0 ||
+  (state.mode === MODE.ADVANCED && (
+    state.advanced.majorRound > 1 ||
+    state.advanced.awaitingNext ||
+    state.advanced.matchFinished ||
+    Object.values(state.advanced.majorScore).some((score) => score > 0)
+  ));
+
 const setDifficulty = (difficulty, restart = true) => {
   if (!Object.values(DIFFICULTY).includes(difficulty)) return;
   const changed = state.difficulty !== difficulty;
+  const hadProgress = matchHasProgress();
   state.difficulty = difficulty;
   difficultyButtons.forEach((button) => {
     const active = button.dataset.difficulty === difficulty;
@@ -1188,8 +1287,35 @@ const setDifficulty = (difficulty, restart = true) => {
   }
   if (restart && changed) {
     resetMatch();
-    setHint(`已切換為${difficultyLabel()}電腦，並重新開始本場對局。`);
+    setHint(hadProgress
+      ? `已切換為${difficultyLabel()}難度，並重新開始本場對局。`
+      : `已切換為${difficultyLabel()}難度。`);
   }
+};
+
+const closeDifficultyConfirmation = () => {
+  pendingDifficulty = null;
+  if (difficultyConfirmDialog.open) difficultyConfirmDialog.close();
+};
+
+const requestDifficultyChange = (difficulty) => {
+  if (!Object.values(DIFFICULTY).includes(difficulty) || difficulty === state.difficulty) return;
+
+  if (!matchHasProgress()) {
+    setDifficulty(difficulty);
+    return;
+  }
+
+  pendingDifficulty = difficulty;
+  const progress = state.mode === MODE.ADVANCED
+    ? `目前在第 ${state.advanced.majorRound} 大局，已完成 ${state.playerHistory.length} / ${TOTAL_ROUNDS} 回合`
+    : `目前已完成 ${state.playerHistory.length} / ${TOTAL_ROUNDS} 回合`;
+  difficultyConfirmCopy.textContent =
+    `${progress}。切換為「${difficultyLabel(difficulty)}」會清除這場對局進度。`;
+
+  if (typeof difficultyConfirmDialog.showModal === "function") difficultyConfirmDialog.showModal();
+  else difficultyConfirmDialog.setAttribute("open", "");
+  cancelDifficultyBtn.focus();
 };
 
 playerArea.addEventListener("dragenter", (event) => {
@@ -1289,7 +1415,20 @@ nextMajorBtn.addEventListener("click", startNextMajorRound);
 modeBasicBtn.addEventListener("click", () => setMode(MODE.BASIC));
 modeAdvancedBtn.addEventListener("click", () => setMode(MODE.ADVANCED));
 difficultyButtons.forEach((button) => {
-  button.addEventListener("click", () => setDifficulty(button.dataset.difficulty));
+  button.addEventListener("click", () => requestDifficultyChange(button.dataset.difficulty));
+});
+difficultyConfirmDialog.addEventListener("click", (event) => {
+  if (event.target === difficultyConfirmDialog) closeDifficultyConfirmation();
+});
+difficultyConfirmDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeDifficultyConfirmation();
+});
+cancelDifficultyBtn.addEventListener("click", closeDifficultyConfirmation);
+confirmDifficultyBtn.addEventListener("click", () => {
+  const difficulty = pendingDifficulty;
+  closeDifficultyConfirmation();
+  if (difficulty) setDifficulty(difficulty);
 });
 clearObservationsBtn.addEventListener("click", () => {
   if (!strategyAvailable()) {
@@ -1302,7 +1441,9 @@ clearObservationsBtn.addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && state.advanced.modalOpen) {
+  if (event.key === "Escape" && difficultyConfirmDialog.open) {
+    return;
+  } else if (event.key === "Escape" && state.advanced.modalOpen) {
     closeAdvancedModal();
     syncUiState();
   } else if (event.key === "Escape") {

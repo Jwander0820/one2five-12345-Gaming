@@ -17,7 +17,7 @@
       <div class="brand-block">
         <p class="eyebrow"><span class="suit-mark" aria-hidden="true">♠</span> FIVE-LANE CARD DUEL</p>
         <h1 id="game-title">1・2・3・4・5</h1>
-        <p id="game-subtitle" class="subtitle">大數字勝，唯有 <strong>1 勝 5、2 勝 4</strong>。五張牌，五次抉擇。</p>
+        <p id="game-subtitle" class="subtitle">完成五回合，依規則比較每路勝負與本局結果。</p>
       </div>
 
       <div class="header-controls">
@@ -33,13 +33,16 @@
           <span class="difficulty-label"><i aria-hidden="true"></i>電腦難度</span>
           <div class="difficulty-switch" role="group" aria-label="選擇電腦難度">
             <button class="difficulty-button" type="button" data-difficulty="beginner" aria-pressed="false">
-              <span>初</span><small>隨性</small>
+              <span class="difficulty-pips" aria-hidden="true"></span>
+              <span class="difficulty-name">輕鬆</span><small>隨性</small>
             </button>
             <button class="difficulty-button active" type="button" data-difficulty="intermediate" aria-pressed="true">
-              <span>中</span><small>權衡</small>
+              <span class="difficulty-pips" aria-hidden="true"></span>
+              <span class="difficulty-name">標準</span><small>權衡</small>
             </button>
             <button class="difficulty-button" type="button" data-difficulty="expert" aria-pressed="false">
-              <span>高</span><small>推演</small>
+              <span class="difficulty-pips" aria-hidden="true"></span>
+              <span class="difficulty-name">挑戰</span><small>推演</small>
             </button>
           </div>
         </div>
@@ -233,12 +236,32 @@
       <div class="modal-scroll-content">
         <p id="advanced-modal-intro" class="panel-note">先選一張功能卡，再選擇放置位置。</p>
 
-        <div class="modal-info-grid">
-          <div class="decision-block board-context">
-            <h3>目前盤面</h3>
-            <span>電腦</span><div id="modal-cpu-board" class="mini-row enemy"></div>
-            <span>玩家</span><div id="modal-player-board" class="mini-row"></div>
-          </div>
+        <div class="board-comparison">
+          <section class="board-preview-panel" aria-labelledby="current-board-title">
+            <div class="board-preview-heading">
+              <div>
+                <span class="board-preview-kicker">CURRENT BOARD</span>
+                <h3 id="current-board-title">目前盤面</h3>
+              </div>
+              <strong id="modal-current-score" class="board-score">玩家 0：0 電腦</strong>
+            </div>
+            <div class="board-preview-legend" aria-hidden="true">
+              <span class="enemy">♦ 電腦</span><span>♠ 玩家</span>
+            </div>
+            <div id="modal-current-board" class="lane-preview-grid" aria-label="目前五路牌面"></div>
+          </section>
+
+          <section id="modal-preview-panel" class="board-preview-panel preview-panel pending" aria-labelledby="preview-board-title" aria-live="polite">
+            <div class="board-preview-heading">
+              <div>
+                <span class="board-preview-kicker">YOUR TACTIC PREVIEW</span>
+                <h3 id="preview-board-title">玩家效果預演</h3>
+              </div>
+              <strong id="modal-preview-score" class="board-score">等待選擇</strong>
+            </div>
+            <p id="modal-preview-note" class="preview-note">選好功能卡與位置後顯示；正式結算仍會受到電腦功能牌影響。</p>
+            <div id="modal-preview-board" class="lane-preview-grid" aria-label="玩家功能牌效果後的五路牌面"></div>
+          </section>
         </div>
 
         <div class="modal-grid">
@@ -263,6 +286,19 @@
           </div>
         </div>
         <button id="resolve-advanced-btn" class="button" type="button" disabled>確認並執行</button>
+      </div>
+    </section>
+  </dialog>
+
+  <dialog id="difficulty-confirm-dialog" class="difficulty-confirm-dialog" aria-labelledby="difficulty-confirm-title">
+    <section class="difficulty-confirm-panel">
+      <div class="difficulty-confirm-mark" aria-hidden="true">♦ ♦ ♦</div>
+      <p class="section-kicker">CHANGE DIFFICULTY</p>
+      <h2 id="difficulty-confirm-title">重新開始並切換難度？</h2>
+      <p id="difficulty-confirm-copy" class="panel-note">切換難度會清除目前對局進度。</p>
+      <div class="difficulty-confirm-actions">
+        <button id="cancel-difficulty-btn" class="button button-secondary" type="button">保留本局</button>
+        <button id="confirm-difficulty-btn" class="button" type="button">重新開始</button>
       </div>
     </section>
   </dialog>
