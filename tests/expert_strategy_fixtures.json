@@ -1,0 +1,59 @@
+{
+  "numberHistory": [
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5],
+    [1,2,3,4,5]
+  ],
+  "functionHistory": [
+    ["K",3],
+    ["K",3],
+    ["K",3],
+    ["K",3],
+    ["K",3],
+    ["K",3],
+    ["K",3],
+    ["K",3],
+    ["K",3],
+    ["K",3],
+    ["K",3],
+    ["K",3]
+  ],
+  "numbers": [
+    {"state":{"cpuRemaining":[1,3,5],"playerRemaining":[3,4,5],"scoreDiff":0,"roundIndex":2,"difficulty":"expert","mode":"basic"},"scores":{"1":-3.301517942849215,"3":2.027204978061878,"5":1.9110470853936512}},
+    {"state":{"cpuRemaining":[1,3,4,5],"playerRemaining":[2,3,4,5],"scoreDiff":-1,"roundIndex":1,"difficulty":"expert","mode":"basic"},"scores":{"1":-3.398882838700676,"3":1.366754289077615,"4":-1.4420236861488618,"5":1.0248865639405564}}
+  ],
+  "functions": [
+    {"state":{"cpuBoard":[1,2,3,4,5],"playerBoard":[1,4,2,5,3],"cpuCards":["J","K","JK"],"playerCards":["J"],"cpuMajorScore":1,"difficulty":"expert"},"distribution":[{"action":{"card":"K","position":4},"probability":1.0}]},
+    {"state":{"cpuBoard":[1,2,3,4,5],"playerBoard":[5,3,4,1,2],"cpuCards":["J","Q","K","JK"],"playerCards":["J","Q","K","JK"],"cpuMajorScore":0,"difficulty":"expert"},"distribution":[{"action":{"card":"J","position":3},"probability":0.5260416666666666},{"action":{"card":"Q","position":2},"probability":0.09505208333333333},{"action":{"card":"K","position":1},"probability":0.0026041666666666665},{"action":{"card":"K","position":4},"probability":0.3763020833333333}]},
+    {"state":{"cpuBoard":[1,2,3,4,5],"playerBoard":[5,3,4,1,2],"cpuCards":["J","Q","K","JK"],"playerCards":["J","Q","K","JK"],"cpuMajorScore":1,"difficulty":"expert"},"distribution":[{"action":{"card":"J","position":3},"probability":0.53125},{"action":{"card":"Q","position":2},"probability":0.10546875},{"action":{"card":"K","position":1},"probability":0.0013020833333333333},{"action":{"card":"K","position":4},"probability":0.3619791666666667}]},
+    {"state":{"cpuBoard":[1,2,3,4,5],"playerBoard":[5,3,4,1,2],"cpuCards":["Q","JK"],"playerCards":["Q","JK"],"cpuMajorScore":0,"difficulty":"expert"},"distribution":[{"action":{"card":"Q","position":1},"probability":0.125},{"action":{"card":"Q","position":2},"probability":0.2994791666666667},{"action":{"card":"Q","position":4},"probability":0.26171875},{"action":{"card":"Q","position":5},"probability":0.11197916666666667},{"action":{"card":"JK","position":1},"probability":0.20182291666666666}]},
+    {"state":{"cpuBoard":[1,2,3,4,5],"playerBoard":[5,3,4,1,2],"cpuCards":["Q","JK"],"playerCards":["Q","JK"],"cpuMajorScore":1,"difficulty":"expert"},"distribution":[{"action":{"card":"Q","position":1},"probability":0.10416666666666667},{"action":{"card":"Q","position":2},"probability":0.3294270833333333},{"action":{"card":"Q","position":4},"probability":0.2864583333333333},{"action":{"card":"Q","position":5},"probability":0.09375},{"action":{"card":"JK","position":1},"probability":0.18619791666666666}]},
+    {"state":{"cpuBoard":[1,2,3,4,5],"playerBoard":[5,3,4,1,2],"cpuCards":["K","J"],"playerCards":["K","J"],"cpuMajorScore":0,"difficulty":"expert"},"distribution":[{"action":{"card":"J","position":3},"probability":1.0}]},
+    {"state":{"cpuBoard":[1,2,3,4,5],"playerBoard":[5,3,4,1,2],"cpuCards":["K","J"],"playerCards":["K","J"],"cpuMajorScore":1,"difficulty":"expert"},"distribution":[{"action":{"card":"J","position":3},"probability":1.0}]},
+    {"state":{"cpuBoard":[1,2,3,4,5],"playerBoard":[5,3,4,1,2],"cpuCards":["JK"],"playerCards":["JK"],"cpuMajorScore":0,"difficulty":"expert"},"distribution":[{"action":{"card":"JK","position":1},"probability":1.0}]},
+    {"state":{"cpuBoard":[1,2,3,4,5],"playerBoard":[5,3,4,1,2],"cpuCards":["JK"],"playerCards":["JK"],"cpuMajorScore":1,"difficulty":"expert"},"distribution":[{"action":{"card":"JK","position":1},"probability":1.0}]}
+  ],
+  "advancedNumbers": [
+    {"state":{"cpuRemaining":[3,5],"playerRemaining":[4,5],"cpuBoard":[1,2,4],"playerBoard":[1,2,3],"cpuCards":["JK"],"playerCards":["J"],"roundIndex":3,"difficulty":"expert","mode":"advanced"},"scores":{"3":0.9969446932961779,"5":-0.9118691262731884}},
+    {"state":{"cpuRemaining":[3,5],"playerRemaining":[4,5],"cpuBoard":[1,2,4],"playerBoard":[1,2,3],"cpuCards":["JK"],"playerCards":["JK"],"roundIndex":3,"difficulty":"expert","mode":"advanced"},"scores":{"3":3.25,"5":9.75}},
+    {"state":{"cpuRemaining":[1,2,3,4,5],"playerRemaining":[1,2,3,4,5],"cpuBoard":[],"playerBoard":[],"cpuCards":["J","Q","K","JK"],"playerCards":["J","Q","K","JK"],"roundIndex":0,"difficulty":"expert","mode":"advanced"},"scores":{"1":3.218923441452749,"2":5.265655344446742,"3":3.030555320639502,"4":3.856574609004416,"5":3.854422145633399}},
+    {"state":{"cpuRemaining":[1,2,4,5],"playerRemaining":[2,3,4,5],"cpuBoard":[3],"playerBoard":[1],"cpuCards":["Q","K","JK"],"playerCards":["J","K","JK"],"cpuMajorScore":1,"roundIndex":1,"difficulty":"expert","mode":"advanced"},"scores":{"1":5.626799016825041,"2":5.07765833752066,"4":5.268099914081871,"5":6.30281511681203}}
+  ]
+}

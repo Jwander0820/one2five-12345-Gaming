@@ -240,6 +240,11 @@ const prepareComputerNumberCard = () => {
         playerRemaining: state.playerDeck,
         scoreDiff: cpuWins - playerWins,
         roundIndex: state.playerHistory.length,
+        cpuBoard: state.cpuHistory,
+        playerBoard: state.playerHistory,
+        cpuCards: state.advanced.cpuCards,
+        playerCards: state.advanced.playerCards,
+        cpuMajorScore: state.advanced.majorScore.cpu,
         difficulty: state.difficulty,
         mode: state.mode,
       })
@@ -1077,7 +1082,12 @@ const settleAdvancedMajorRound = () => {
 
   if (strategyAvailable()) {
     window.ComputerStrategy.recordNumberSequence(MODE.ADVANCED, state.playerHistory);
-    window.ComputerStrategy.recordFunctionAction(MODE.ADVANCED, playerCard, playerPos);
+    window.ComputerStrategy.recordFunctionAction(MODE.ADVANCED, playerCard, playerPos, {
+      cpuBoard: state.cpuHistory,
+      playerBoard: state.playerHistory,
+      cpuCards: state.advanced.cpuCards,
+      playerCards: state.advanced.playerCards,
+    });
     updateObservationStatus();
   }
 

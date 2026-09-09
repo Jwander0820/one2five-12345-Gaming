@@ -13,6 +13,7 @@ import json
 import math
 import random
 from functools import lru_cache
+from itertools import permutations
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
@@ -52,15 +53,22 @@ DIFFICULTY_PROFILES: dict[str, dict[str, float | int]] = {
     },
     "expert": {
         "lookahead": 5,
-        "history_weight": 0.24,
-        "random_rate": 0.10,
-        "noise_sigma": 0.28,
+        "history_weight": 0.80,
+        "random_rate": 0.0,
+        "noise_sigma": 0.0,
         "blunder_rate": 0.0,
-        "function_random_rate": 0.28,
-        "function_noise_sigma": 0.42,
+        "function_random_rate": 0.0,
+        "function_noise_sigma": 0.0,
         "function_blunder_rate": 0.0,
         "worst_case_weight": 0.30,
         "reserve_weight": 0.36,
+        "opponent_weight": 0.35,
+        "opponent_weight_min": 0.08,
+        "opponent_weight_max": 0.65,
+        "planning_samples": 4,
+        "planning_width": 6,
+        "planning_iterations": 24,
+        "solver_iterations": 768,
     },
 }
 
@@ -133,6 +141,8 @@ def empty_observations() -> dict[str, Any]:
         "completed_sequences": 0,
         "number_counts": _empty_number_counts(),
         "function_counts": _empty_function_counts(),
+        "function_contexts": {},
+        "function_tactics": {"samples": 0.0, "advantage": 0.0},
     }
 
 
@@ -182,16 +192,49 @@ def score_number_actions(
     round_index: int,
     difficulty: str,
     observations: Mapping[str, Any] | None = None,
+    *,
+    advanced_context: Mapping[str, Any] | None = None,
 ) -> dict[int, float]:
     cpu_cards = tuple(sorted(set(cpu_remaining)))
     player_cards = tuple(sorted(set(player_remaining)))
     if not cpu_cards or len(cpu_cards) != len(player_cards):
         raise ValueError("Both sides must have the same non-zero number of cards")
+    if difficulty == "expert" and advanced_context is not None:
+        return _score_advanced_numbers(cpu_cards, player_cards, round_index, observations, advanced_context)
 
     profile = _profile(difficulty)
     depth = min(int(profile["lookahead"]), len(cpu_cards))
     prediction = predict_number_distribution(
         player_cards, round_index, difficulty, observations
+    )
+
+    # Each hypothetical round uses the same completed-game observations.
+    # Cache only within this decision so newly recorded habits cannot go stale.
+    @lru_cache(maxsize=None)
+    def predict_future(remaining: tuple[int, ...], index: int) -> dict[int, float]:
+        return predict_number_distribution(remaining, index, difficulty, observations)
+
+    @lru_cache(maxsize=None)
+    def expert_future(cpu: tuple[int, ...], player: tuple[int, ...], diff: int) -> float:
+        if not cpu:
+            return _terminal_utility(diff)
+        index = round_index + len(cpu_cards) - len(cpu)
+        distribution = predict_future(player, index)
+        return max(
+            sum(
+                probability * expert_future(
+                    tuple(card for card in cpu if card != cpu_card),
+                    tuple(card for card in player if card != player_card),
+                    diff + round_payoff(cpu_card, player_card),
+                )
+                for player_card, probability in distribution.items()
+            )
+            for cpu_card in cpu
+        )
+
+    use_history_search = difficulty == "expert" and observations and any(
+        sum(float(value) for value in row.values()) > 0
+        for row in observations.get("number_counts", [])
     )
     scores: dict[int, float] = {}
     for cpu_card in cpu_cards:
@@ -200,7 +243,11 @@ def score_number_actions(
         for player_card, probability in prediction.items():
             next_player = tuple(card for card in player_cards if card != player_card)
             new_diff = score_diff + round_payoff(cpu_card, player_card)
-            continuation = _future_value(next_cpu, next_player, new_diff, depth - 1)
+            continuation = (
+                expert_future(next_cpu, next_player, new_diff)
+                if use_history_search
+                else _future_value(next_cpu, next_player, new_diff, depth - 1)
+            )
             score += probability * continuation
         scores[cpu_card] = score
     return scores
@@ -215,6 +262,10 @@ def _choose_from_scores(
 ) -> Any:
     profile = _profile(difficulty)
     actions = list(scores)
+    if difficulty == "expert":
+        best = max(scores.values())
+        # Randomize equivalent choices, never replace a winning move with noise.
+        return rng.choice([action for action in actions if scores[action] >= best - 1e-9])
     random_key = "function_random_rate" if phase == "function" else "random_rate"
     blunder_key = "function_blunder_rate" if phase == "function" else "blunder_rate"
     sigma_key = "function_noise_sigma" if phase == "function" else "noise_sigma"
@@ -240,6 +291,8 @@ def choose_number_card(
     difficulty: str = "intermediate",
     observations: Mapping[str, Any] | None = None,
     rng: random.Random | None = None,
+    *,
+    advanced_context: Mapping[str, Any] | None = None,
 ) -> int:
     scores = score_number_actions(
         cpu_remaining,
@@ -248,6 +301,7 @@ def choose_number_card(
         round_index,
         difficulty,
         observations,
+        advanced_context=advanced_context,
     )
     return int(_choose_from_scores(scores, difficulty, rng or random.Random(), 5.0))
 
@@ -307,6 +361,19 @@ def predict_function_distribution(
     if not observations or history_cap <= 0:
         probability = 1.0 / len(actions)
         return {action: probability for action in actions}
+
+    # Condition habits on the legal hand. A player who uses J first and Q next
+    # must not look uniform just because each card is used once per match.
+    context_counts = observations.get("function_contexts", {}).get("|".join(cards), {})
+    samples = sum(float(value) for value in context_counts.values())
+    if difficulty == "expert" and samples > 0:
+        weight = history_cap * min(1.0, samples / OBSERVATION_CONFIDENCE_GAMES)
+        total = samples + len(actions)
+        return {
+            action: (1.0 - weight) / len(actions)
+            + weight * (float(context_counts.get(f"{action[0]}:{action[1]}", 0.0)) + 1.0) / total
+            for action in actions
+        }
 
     function_counts = observations.get("function_counts", {})
     card_counts = function_counts.get("cards", {})
@@ -391,6 +458,18 @@ def choose_function_action(
     observations: Mapping[str, Any] | None = None,
     rng: random.Random | None = None,
 ) -> tuple[str, int]:
+    if difficulty == "expert":
+        distribution = expert_function_distribution(
+            cpu_board, player_board, cpu_cards, player_cards,
+            cpu_major_score, observations,
+        )
+        roll = (rng or random.Random()).random()
+        cumulative = 0.0
+        for action, probability in distribution.items():
+            cumulative += probability
+            if roll < cumulative:
+                return action
+        return next(reversed(distribution))
     scores = score_function_actions(
         cpu_board,
         player_board,
@@ -405,6 +484,175 @@ def choose_function_action(
     )
 
 
+def _solve_matrix(matrix: Sequence[Sequence[float]], iterations: int, prune: bool = True) -> list[float]:
+    """Approximate a simultaneous zero-sum policy with fictitious play.
+
+    Remove dominated rows before mixing. Unlike per-action worst-case
+    scoring, the opponent must counter the distribution, not see the drawn move.
+    """
+    # Integer payoffs keep equivalent J/Q effects tied in Python and JavaScript.
+    matrix = [[math.floor(value * 1e8 + 0.5) for value in row] for row in matrix]
+    active = [
+        i for i, row in enumerate(matrix)
+        if not prune or not any(
+            all(b >= a - 1e-9 for a, b in zip(row, other))
+            and any(b > a + 1e-9 for a, b in zip(row, other))
+            for j, other in enumerate(matrix) if j != i
+        )
+    ]
+    rows = [matrix[i] for i in active]
+    row_totals = [sum(row) / len(row) for row in rows]
+    column_totals = [0.0] * len(rows[0])
+    counts = [0] * len(rows)
+    for step in range(iterations):
+        # Rotate tie order to avoid a systematic first-card preference.
+        chosen = max(
+            ((step + i) % len(rows) for i in range(len(rows))),
+            key=row_totals.__getitem__,
+        )
+        counts[chosen] += 1
+        for column, value in enumerate(rows[chosen]):
+            column_totals[column] += value
+        reply = min(range(len(column_totals)), key=column_totals.__getitem__)
+        for i, row in enumerate(rows):
+            row_totals[i] += row[reply]
+    probabilities = [0.0] * len(matrix)
+    for i, count in zip(active, counts):
+        probabilities[i] = count / iterations
+    return probabilities
+
+
+def opponent_counter_weight(observations: Mapping[str, Any] | None = None) -> float:
+    """Infer tactical response strength, rather than mistaking randomness for skill."""
+    profile = _profile("expert")
+    evidence = (observations or {}).get("function_tactics", {})
+    samples = float(evidence.get("samples", 0.0))
+    if samples <= 0:
+        return float(profile["opponent_weight"])
+    advantage = float(evidence.get("advantage", 0.0)) / samples
+    skill = max(0.0, min(1.0, (advantage - 0.05) / 0.45))
+    learned = float(profile["opponent_weight_min"]) + skill * (
+        float(profile["opponent_weight_max"]) - float(profile["opponent_weight_min"])
+    )
+    confidence = min(1.0, samples / 16.0)
+    return (1.0 - confidence) * float(profile["opponent_weight"]) + confidence * learned
+
+
+def _function_actions(cards: Sequence[str]) -> tuple[tuple[str, int], ...]:
+    return tuple((card, position) for card in FUNCTION_CARDS if card in cards
+                 for position in ([1] if card == "JK" else range(1, 6)))
+
+
+@lru_cache(maxsize=4096)
+def _function_diffs(cpu_board, player_board, cpu_actions, player_actions):
+    return tuple(tuple(board_score_diff(*resolve_function_actions(
+        cpu_board, player_board, action, reply
+    )) for reply in player_actions) for action in cpu_actions)
+
+
+def _function_model(cpu_cards, player_cards, observations):
+    actions = _function_actions(cpu_cards)
+    replies = _function_actions(player_cards)
+    predicted = predict_function_distribution(player_cards, "expert", observations)
+    prediction = tuple(sum(p for (card, position), p in predicted.items()
+                           if card == reply[0] and (card == "JK" or position == reply[1]))
+                       for reply in replies)
+    if not actions or not replies:
+        raise ValueError("Both sides need at least one function card")
+    return actions, replies, prediction, opponent_counter_weight(observations)
+
+
+def _evaluate_functions(cpu_board, player_board, cpu_cards, cpu_major_score, model, iterations):
+    actions, replies, prediction, weight = model
+    diffs = _function_diffs(tuple(cpu_board), tuple(player_board), actions, replies)
+    profile = _profile("expert")
+    matrix = []
+    guaranteed = []
+    for action, row in zip(actions, diffs):
+        outcomes = []
+        for diff in row:
+            major = 1 if diff > 0 else -1 if diff < 0 else 0
+            clinch = 2.0 if major > 0 and cpu_major_score >= 1 else 0.0
+            reserve = (float(profile["reserve_weight"]) * FUNCTION_RESERVE_VALUE[action[0]]
+                       if len(cpu_cards) > 1 and not clinch else 0.0)
+            outcomes.append(12.0 * major + diff + clinch - reserve)
+        expected = sum(value * p for value, p in zip(outcomes, prediction))
+        matrix.append([weight * value + (1.0 - weight) * expected for value in outcomes])
+        guaranteed.append(min(row) > 0)
+    has_forced_win = any(guaranteed)
+    candidates = [i for i in range(len(actions)) if guaranteed[i] or not has_forced_win]
+    selected = [matrix[i] for i in candidates]
+    probabilities = _solve_matrix(selected, iterations, prune=iterations >= 100)
+    value = min(sum(p * row[column] for p, row in zip(probabilities, selected))
+                for column in range(len(replies)))
+    return {actions[i]: p for i, p in zip(candidates, probabilities) if p > 0}, value
+
+
+def expert_function_distribution(
+    cpu_board: Sequence[int],
+    player_board: Sequence[int],
+    cpu_cards: Sequence[str],
+    player_cards: Sequence[str],
+    cpu_major_score: int = 0,
+    observations: Mapping[str, Any] | None = None,
+) -> dict[tuple[str, int], float]:
+    """Mix counterplay with exploitation of observed, legal opponent actions."""
+    model = _function_model(cpu_cards, player_cards, observations)
+    return _evaluate_functions(cpu_board, player_board, cpu_cards, cpu_major_score,
+                               model, int(_profile("expert")["solver_iterations"]))[0]
+
+
+def _score_advanced_numbers(cpu_cards, player_cards, round_index, observations, context):
+    """Bounded, open-loop rollouts through function resolution; replan on reveal.
+
+    Stratified opponent scenarios come only from observations. A CPU continuation
+    is shared across scenarios, so it cannot react to an unrevealed future card.
+    """
+    cpu_prefix = tuple(context["cpu_board"])
+    player_prefix = tuple(context["player_board"])
+    if (len(cpu_prefix) != round_index or len(player_prefix) != round_index
+            or sorted(cpu_prefix + cpu_cards) != list(NUMBER_CARDS)
+            or sorted(player_prefix + player_cards) != list(NUMBER_CARDS)):
+        raise ValueError("Advanced search needs the revealed board prefixes and legal remaining cards")
+    profile = _profile("expert")
+    model = _function_model(context["cpu_cards"], context["player_cards"], observations)
+    scenarios = []
+    for sequence in permutations(player_cards):
+        remaining = player_cards
+        probability = 1.0
+        for index, card in enumerate(sequence):
+            probability *= predict_number_distribution(
+                remaining, round_index + index, "expert", observations
+            )[card]
+            remaining = tuple(value for value in remaining if value != card)
+        scenarios.append((sequence, probability))
+    samples = int(profile["planning_samples"])
+    sampled: dict[tuple[int, ...], float] = {}
+    for sample in range(samples):
+        quantile = (sample + 0.5) / samples
+        cumulative = 0.0
+        selected = scenarios[-1][0]
+        for sequence, probability in scenarios:
+            cumulative += probability
+            if quantile < cumulative:
+                selected = sequence
+                break
+        sampled[selected] = sampled.get(selected, 0.0) + 1.0 / samples
+    scores = {}
+    for first in cpu_cards:
+        tails = list(permutations(card for card in cpu_cards if card != first))
+        width = min(int(profile["planning_width"]), len(tails))
+        candidates = [tails[int((i + 0.5) * len(tails) / width)] for i in range(width)]
+        scores[first] = max(sum(
+            probability * _evaluate_functions(
+                cpu_prefix + (first,) + tail, player_prefix + sequence,
+                context["cpu_cards"], context.get("cpu_major_score", 0), model,
+                int(profile["planning_iterations"]),
+            )[1] for sequence, probability in sampled.items()
+        ) for tail in candidates)
+    return scores
+
+
 def record_number_sequence(observations: dict[str, Any], sequence: Sequence[int]) -> None:
     counts = observations.setdefault("number_counts", _empty_number_counts())
     for row in counts:
@@ -416,8 +664,36 @@ def record_number_sequence(observations: dict[str, Any], sequence: Sequence[int]
 
 
 def record_function_action(
-    observations: dict[str, Any], card: str, position: int
+    observations: dict[str, Any], card: str, position: int,
+    *, context: Mapping[str, Any] | None = None,
 ) -> None:
+    if context is not None:
+        cpu_actions, player_actions, _, _ = _function_model(
+            context["cpu_cards"], context["player_cards"], None
+        )
+        diffs = _function_diffs(tuple(context["cpu_board"]), tuple(context["player_board"]),
+                                cpu_actions, player_actions)
+        cpu_weights = [1.0 / (len(context["cpu_cards"]) * (1 if a[0] == "JK" else 5))
+                       for a in cpu_actions]
+        values = [sum(weight * (-12 * ((row[j] > 0) - (row[j] < 0)) - row[j])
+                      for weight, row in zip(cpu_weights, diffs))
+                  for j in range(len(player_actions))]
+        average = sum(value / (len(context["player_cards"]) * (1 if a[0] == "JK" else 5))
+                      for a, value in zip(player_actions, values))
+        spread = max(abs(value - average) for value in values)
+        evidence = observations.setdefault("function_tactics", {"samples": 0.0, "advantage": 0.0})
+        evidence["samples"] *= OBSERVATION_DECAY
+        evidence["advantage"] *= OBSERVATION_DECAY
+        if spread > 1e-9:
+            chosen = player_actions.index((card, 1 if card == "JK" else position))
+            evidence["samples"] += 1.0
+            evidence["advantage"] += (values[chosen] - average) / spread
+        key = "|".join(c for c in FUNCTION_CARDS if c in context["player_cards"])
+        joint = observations.setdefault("function_contexts", {}).setdefault(key, {})
+        for action in list(joint):
+            joint[action] *= OBSERVATION_DECAY
+        action = f"{card}:{position}"
+        joint[action] = joint.get(action, 0.0) + 1.0
     counts = observations.setdefault("function_counts", _empty_function_counts())
     for key in FUNCTION_CARDS:
         counts["cards"][key] = float(counts["cards"].get(key, 0.0)) * OBSERVATION_DECAY
@@ -548,6 +824,7 @@ def simulate_advanced_balance(
     seed: int = 12345,
     habitual: bool = False,
     player_sequence: Sequence[int] = NUMBER_CARDS,
+    fixed_numbers: bool = False,
 ) -> dict[str, float | int]:
     """Simulate advanced matches without involving the browser UI."""
 
@@ -566,7 +843,7 @@ def simulate_advanced_balance(
 
         while True:
             round_sequence = list(player_sequence)
-            if not habitual:
+            if not habitual and not fixed_numbers:
                 rng.shuffle(round_sequence)
             cpu_remaining = list(NUMBER_CARDS)
             player_remaining = list(NUMBER_CARDS)
@@ -582,6 +859,11 @@ def simulate_advanced_balance(
                     difficulty,
                     observations,
                     rng,
+                    advanced_context={
+                        "cpu_board": cpu_board, "player_board": player_board,
+                        "cpu_cards": cpu_functions, "player_cards": player_functions,
+                        "cpu_major_score": cpu_major,
+                    },
                 )
                 cpu_board.append(cpu_card)
                 player_board.append(player_card)
@@ -630,7 +912,10 @@ def simulate_advanced_balance(
                 player_major += 1
 
             record_number_sequence(observations, round_sequence)
-            record_function_action(observations, player_function, player_position)
+            record_function_action(observations, player_function, player_position, context={
+                "cpu_board": cpu_board, "player_board": player_board,
+                "cpu_cards": cpu_functions, "player_cards": player_functions,
+            })
             cpu_functions.remove(cpu_action[0])
             player_functions.remove(player_function)
 
