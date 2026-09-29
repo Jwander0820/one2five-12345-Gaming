@@ -125,10 +125,6 @@ const cardValue = (card) => (typeof card === "object" && card !== null ? card.va
 const cardSource = (card, fallbackSource) =>
   typeof card === "object" && card !== null && card.source ? card.source : fallbackSource;
 const createResolvedCard = (value, source) => ({ value, source, effects: [] });
-const cardImagePath = (side, value) =>
-  side === "player"
-    ? `./assets/cards/p1_card_${value}_spades.png`
-    : `./assets/cards/p2_card_${value}_diamond.png`;
 
 const cardAccessibleName = (side, value) => {
   const owner = side === "player" ? "玩家黑桃" : "電腦方塊";
@@ -137,14 +133,36 @@ const cardAccessibleName = (side, value) => {
 };
 
 const createPlayingCardImage = (side, value) => {
-  const image = document.createElement("img");
-  image.className = "playing-card-image";
-  image.src = cardImagePath(side, value);
-  image.alt = cardAccessibleName(side, value);
-  image.width = 1041;
-  image.height = 1458;
-  image.draggable = false;
-  return image;
+  // Inline vectors are ready with the game script, including unrevealed CPU cards.
+  // No per-card download or image decoding is needed when a card is played.
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("class", "playing-card-image");
+  svg.setAttribute("viewBox", "0 0 100 140");
+  svg.setAttribute("width", "100");
+  svg.setAttribute("height", "140");
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", cardAccessibleName(side, value));
+  svg.setAttribute("focusable", "false");
+
+  const suit = side === "player"
+    ? "M0-12C-3-7-11-3-11 3C-11 9-4 11-1 6C-1 10-3 12-5 14H5C3 12 1 10 1 6C4 11 11 9 11 3C11-3 3-7 0-12Z"
+    : "M0-13 10 0 0 13-10 0Z";
+  const positions = {
+    1: [[50, 70]],
+    2: [[50, 30], [50, 110]],
+    3: [[50, 30], [50, 70], [50, 110]],
+    4: [[32, 30], [68, 30], [32, 110], [68, 110]],
+    5: [[32, 30], [68, 30], [50, 70], [32, 110], [68, 110]],
+  };
+  const color = side === "player" ? "#171a19" : "#d92d20";
+  const rank = value === 1 ? "A" : String(value);
+  // A shared centerline and a rotated copy keep both corners exactly aligned.
+  const corner = `<text class="playing-card-rank" x="12" y="23">${rank}</text><path d="${suit}" transform="translate(12 31) scale(.34)"/>`;
+  const pips = positions[value].map(([x, y]) =>
+    `<path d="${suit}" transform="translate(${x} ${y}) rotate(${y > 70 ? 180 : 0}) scale(${value === 1 ? 1.8 : 1})"/>`
+  ).join("");
+  svg.innerHTML = `<rect width="100" height="140" rx="10" fill="#fffdf8"/><g fill="${color}" aria-hidden="true">${corner}<g transform="rotate(180 50 70)">${corner}</g>${pips}</g>`;
+  return svg;
 };
 
 const renderCardIntoSlot = (slot, side, card) => {
@@ -495,7 +513,6 @@ const createLanePreviewCard = (card, fallbackSource) => {
 
   const source = cardSource(card, fallbackSource);
   const image = createPlayingCardImage(source, cardValue(card));
-  image.alt = "";
   image.setAttribute("aria-hidden", "true");
   slot.classList.add(`source-${source}`);
   slot.appendChild(image);
