@@ -76,6 +76,8 @@
               </div>
             </div>
 
+            <p class="core-rules">大牌勝 <span>1 勝 5</span> <span>2 勝 4</span> 同數平手</p>
+
             <div class="duel-board" aria-label="五回合對戰牌道">
               <div class="lane-numbers" aria-hidden="true">
                 <span>Ⅰ</span><span>Ⅱ</span><span>Ⅲ</span><span>Ⅳ</span><span>Ⅴ</span>
@@ -167,6 +169,7 @@
             <ol id="rules-list">
               <li>每回合從手牌選一張。</li>
               <li>每張牌只能使用一次。</li>
+              <li>數字較大者勝，但 1 勝過 5、2 勝過 4；相同數字平手。</li>
               <li>五回合後比較勝局數。</li>
             </ol>
           </div>
@@ -293,7 +296,7 @@
   <dialog id="difficulty-confirm-dialog" class="difficulty-confirm-dialog" aria-labelledby="difficulty-confirm-title">
     <section class="difficulty-confirm-panel">
       <div class="difficulty-confirm-mark" aria-hidden="true">♦ ♦ ♦</div>
-      <p class="section-kicker">CHANGE DIFFICULTY</p>
+      <p id="difficulty-confirm-kicker" class="section-kicker">CHANGE DIFFICULTY</p>
       <h2 id="difficulty-confirm-title">重新開始並切換難度？</h2>
       <p id="difficulty-confirm-copy" class="panel-note">切換難度會清除目前對局進度。</p>
       <div class="difficulty-confirm-actions">

@@ -48,7 +48,7 @@ const state = {
   },
 };
 
-let pendingDifficulty = null;
+let pendingMatchChange = null;
 
 const gameShell = document.getElementById("game-shell");
 const cpuArea = document.getElementById("cpu-area");
@@ -105,8 +105,11 @@ const mobileInfoButtons = [...document.querySelectorAll("[data-panel-target]")];
 
 const modeBasicBtn = document.getElementById("mode-basic");
 const modeAdvancedBtn = document.getElementById("mode-advanced");
+const restartBtn = document.getElementById("restart-btn");
 const difficultyButtons = [...document.querySelectorAll("[data-difficulty]")];
 const difficultyConfirmDialog = document.getElementById("difficulty-confirm-dialog");
+const difficultyConfirmTitle = document.getElementById("difficulty-confirm-title");
+const difficultyConfirmKicker = document.getElementById("difficulty-confirm-kicker");
 const difficultyConfirmCopy = document.getElementById("difficulty-confirm-copy");
 const cancelDifficultyBtn = document.getElementById("cancel-difficulty-btn");
 const confirmDifficultyBtn = document.getElementById("confirm-difficulty-btn");
@@ -370,9 +373,10 @@ const openAdvancedModal = () => {
   state.advanced.modalOpen = true;
 };
 
-const closeAdvancedModal = () => {
+const closeAdvancedModal = (restoreFocus = false) => {
   state.advanced.modalOpen = false;
   if (advancedModal.open) advancedModal.close();
+  if (restoreFocus) openAdvancedModalBtn.focus();
 };
 
 const createSlot = (className = "slot") => {
@@ -674,6 +678,9 @@ const updatePlacementSummary = () => {
 };
 
 const renderPlayerHand = () => {
+  const focusedValue = playerHand.contains(document.activeElement)
+    ? Number(document.activeElement.dataset.value)
+    : null;
   playerHand.innerHTML = "";
   const locked = isInteractionLocked();
 
@@ -728,6 +735,11 @@ const renderPlayerHand = () => {
 
     playerHand.appendChild(card);
   });
+
+  if (focusedValue !== null) {
+    const nextValue = state.playerDeck.find((value) => value > focusedValue) ?? state.playerDeck[0];
+    playerHand.querySelector(`[data-value="${nextValue}"]:not(:disabled)`)?.focus({ preventScroll: true });
+  }
 };
 
 const pushCardToArea = (area, value, roundIndex) => {
@@ -759,6 +771,9 @@ const chooseAdvancedPosition = (pos) => {
 };
 
 const renderAdvancedFunctionHand = () => {
+  const focusedCard = modalPlayerFuncHand.contains(document.activeElement)
+    ? document.activeElement.dataset.card
+    : null;
   modalPlayerFuncHand.innerHTML = "";
   const canInteract = isAdvancedResolutionVisible() && !isInteractionLocked();
 
@@ -770,6 +785,7 @@ const renderAdvancedFunctionHand = () => {
     cardEl.type = "button";
     cardEl.dataset.card = card;
     cardEl.setAttribute("aria-label", `${cardText(card)}：${functionCardDetails[card].caption}`);
+    cardEl.setAttribute("aria-pressed", String(state.advanced.selectedCard === card));
     appendFunctionCardFace(cardEl, card);
 
     if (used) {
@@ -792,9 +808,16 @@ const renderAdvancedFunctionHand = () => {
 
     modalPlayerFuncHand.appendChild(cardEl);
   });
+
+  if (focusedCard) {
+    modalPlayerFuncHand.querySelector(`[data-card="${focusedCard}"]:not(:disabled)`)?.focus({ preventScroll: true });
+  }
 };
 
 const renderAdvancedTargets = () => {
+  const focusedPos = modalPlayerFuncTargets.contains(document.activeElement)
+    ? document.activeElement.dataset.pos
+    : null;
   modalPlayerFuncTargets.innerHTML = "";
   const canInteract = isAdvancedResolutionVisible() && !isInteractionLocked();
 
@@ -807,6 +830,7 @@ const renderAdvancedTargets = () => {
     slot.className = "func-target-slot";
     slot.type = "button";
     slot.dataset.pos = String(pos);
+    slot.setAttribute("aria-pressed", String(selected));
     index.className = "func-target-index";
     content.className = "func-target-card";
     index.textContent = `位置 ${pos}`;
@@ -834,6 +858,10 @@ const renderAdvancedTargets = () => {
 
     slot.append(index, content);
     modalPlayerFuncTargets.appendChild(slot);
+  }
+
+  if (focusedPos) {
+    modalPlayerFuncTargets.querySelector(`[data-pos="${focusedPos}"]:not(:disabled)`)?.focus({ preventScroll: true });
   }
 };
 
@@ -1000,6 +1028,7 @@ const finalizeAdvancedMatch = () => {
   resolveAdvancedBtn.disabled = true;
   updateScoreboardView();
   syncUiState();
+  restartBtn.focus({ preventScroll: true });
 };
 
 const startNextMajorRound = () => {
@@ -1019,6 +1048,7 @@ const startNextMajorRound = () => {
   renderAdvancedCardOptions();
   updateAdvancedDashboard();
   syncUiState();
+  playerHand.querySelector("button:not(:disabled)")?.focus();
 };
 
 const settleAdvancedMajorRound = () => {
@@ -1140,6 +1170,7 @@ const settleAdvancedMajorRound = () => {
   } else {
     setHint("現在請按「進入下一大局」。");
     nextMajorBtn.classList.remove("hidden");
+    nextMajorBtn.focus();
   }
 };
 
@@ -1171,6 +1202,7 @@ const finalizeBasicGame = () => {
   setHint("現在可按「重新開始」再玩一局。");
   updateScoreboardView();
   syncUiState();
+  restartBtn.focus({ preventScroll: true });
 };
 
 const playRound = (playerValue) => {
@@ -1270,6 +1302,7 @@ const setMode = (mode) => {
     modeNote.textContent = "每大局先完成 5 回合，再進入功能卡結算；功能卡整場各只能使用一次。";
     rulesList.innerHTML = `
       <li>每大局先完成 5 回合出牌，所有數字仍不可重複。</li>
+      <li>數字較大者勝，但 1 勝過 5、2 勝過 4；相同數字平手。</li>
       <li>第 5 回合後會跳出功能卡視窗，選 1 張功能卡與要放置的位置。</li>
       <li>K 與 JOKER 會讓實體牌連同黑桃／方塊花色移動，牌所在列即為結算歸屬。</li>
       <li>三大局內比分高者勝；若平手則比較加開局與小分。</li>
@@ -1280,6 +1313,7 @@ const setMode = (mode) => {
     modeNote.textContent = "先完成 5 回合出牌，再查看每回合勝負與本局結果。";
     rulesList.innerHTML = `
       <li>每回合從玩家手牌出 1 張，五個數字各用一次。</li>
+      <li>數字較大者勝，但 1 勝過 5、2 勝過 4；相同數字平手。</li>
       <li>主戰場會即時顯示每個位置的勝負結果。</li>
       <li>本局結束後，可直接從主畫面重新開始。</li>
     `;
@@ -1321,28 +1355,39 @@ const setDifficulty = (difficulty, restart = true) => {
 };
 
 const closeDifficultyConfirmation = () => {
-  pendingDifficulty = null;
+  pendingMatchChange = null;
   if (difficultyConfirmDialog.open) difficultyConfirmDialog.close();
 };
 
-const requestDifficultyChange = (difficulty) => {
-  if (!Object.values(DIFFICULTY).includes(difficulty) || difficulty === state.difficulty) return;
-
+// Mode and difficulty changes share the same progress-preserving confirmation.
+const confirmMatchChange = (kind, label, applyChange) => {
   if (!matchHasProgress()) {
-    setDifficulty(difficulty);
+    applyChange();
     return;
   }
 
-  pendingDifficulty = difficulty;
+  pendingMatchChange = applyChange;
   const progress = state.mode === MODE.ADVANCED
     ? `目前在第 ${state.advanced.majorRound} 大局，已完成 ${state.playerHistory.length} / ${TOTAL_ROUNDS} 回合`
     : `目前已完成 ${state.playerHistory.length} / ${TOTAL_ROUNDS} 回合`;
+  difficultyConfirmTitle.textContent = `重新開始並切換${kind}？`;
+  difficultyConfirmKicker.textContent = kind === "模式" ? "CHANGE MODE" : "CHANGE DIFFICULTY";
   difficultyConfirmCopy.textContent =
-    `${progress}。切換為「${difficultyLabel(difficulty)}」會清除這場對局進度。`;
+    `${progress}。切換為「${label}」會清除這場對局進度。`;
 
   if (typeof difficultyConfirmDialog.showModal === "function") difficultyConfirmDialog.showModal();
   else difficultyConfirmDialog.setAttribute("open", "");
   cancelDifficultyBtn.focus();
+};
+
+const requestModeChange = (mode) => {
+  if (!Object.values(MODE).includes(mode) || mode === state.mode) return;
+  confirmMatchChange("模式", mode === MODE.ADVANCED ? "進階模式" : "普通模式", () => setMode(mode));
+};
+
+const requestDifficultyChange = (difficulty) => {
+  if (!Object.values(DIFFICULTY).includes(difficulty) || difficulty === state.difficulty) return;
+  confirmMatchChange("難度", difficultyLabel(difficulty), () => setDifficulty(difficulty));
 };
 
 playerArea.addEventListener("dragenter", (event) => {
@@ -1410,13 +1455,16 @@ mobileInfoButtons.forEach((button) => {
 
 drawerScrim.addEventListener("click", closeMobileInfoPanel);
 
-document.getElementById("restart-btn").addEventListener("click", resetMatch);
+restartBtn.addEventListener("click", () => {
+  resetMatch();
+  playerHand.querySelector("button:not(:disabled)")?.focus();
+});
 openAdvancedModalBtn.addEventListener("click", () => {
   openAdvancedModal();
   syncUiState();
 });
 closeAdvancedModalBtn.addEventListener("click", () => {
-  closeAdvancedModal();
+  closeAdvancedModal(true);
   syncUiState();
 });
 advancedModal.addEventListener("click", (event) => {
@@ -1428,19 +1476,19 @@ advancedModal.addEventListener("click", (event) => {
     event.clientY < panelBounds.top ||
     event.clientY > panelBounds.bottom;
   if (clickedOutside) {
-    closeAdvancedModal();
+    closeAdvancedModal(true);
     syncUiState();
   }
 });
 advancedModal.addEventListener("cancel", (event) => {
   event.preventDefault();
-  closeAdvancedModal();
+  closeAdvancedModal(true);
   syncUiState();
 });
 resolveAdvancedBtn.addEventListener("click", settleAdvancedMajorRound);
 nextMajorBtn.addEventListener("click", startNextMajorRound);
-modeBasicBtn.addEventListener("click", () => setMode(MODE.BASIC));
-modeAdvancedBtn.addEventListener("click", () => setMode(MODE.ADVANCED));
+modeBasicBtn.addEventListener("click", () => requestModeChange(MODE.BASIC));
+modeAdvancedBtn.addEventListener("click", () => requestModeChange(MODE.ADVANCED));
 difficultyButtons.forEach((button) => {
   button.addEventListener("click", () => requestDifficultyChange(button.dataset.difficulty));
 });
@@ -1453,9 +1501,12 @@ difficultyConfirmDialog.addEventListener("cancel", (event) => {
 });
 cancelDifficultyBtn.addEventListener("click", closeDifficultyConfirmation);
 confirmDifficultyBtn.addEventListener("click", () => {
-  const difficulty = pendingDifficulty;
+  const applyChange = pendingMatchChange;
   closeDifficultyConfirmation();
-  if (difficulty) setDifficulty(difficulty);
+  if (applyChange) {
+    applyChange();
+    playerHand.querySelector("button:not(:disabled)")?.focus();
+  }
 });
 clearObservationsBtn.addEventListener("click", () => {
   if (!strategyAvailable()) {
@@ -1471,7 +1522,7 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && difficultyConfirmDialog.open) {
     return;
   } else if (event.key === "Escape" && state.advanced.modalOpen) {
-    closeAdvancedModal();
+    closeAdvancedModal(true);
     syncUiState();
   } else if (event.key === "Escape") {
     closeMobileInfoPanel();

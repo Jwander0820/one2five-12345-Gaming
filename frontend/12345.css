@@ -384,6 +384,24 @@ summary:focus-visible {
   gap: 16px;
 }
 
+.core-rules {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  margin: 12px 0 0;
+  color: var(--ivory);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.core-rules span {
+  color: var(--brass-light);
+  font-weight: 700;
+}
+
 .player-label {
   display: flex;
   align-items: center;
