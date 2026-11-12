@@ -131,6 +131,7 @@ const resultScoreCpu = document.getElementById("result-score-cpu");
 const playAgainBtn = document.getElementById("play-again-btn");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 let celebrationTimer = null;
+let modalTimer = null;
 
 const infoPanels = [...document.querySelectorAll(".info-panel")];
 const stackedInfoPanels = window.matchMedia("(max-width: 1100px)");
@@ -446,7 +447,10 @@ const renderBoardToArea = (cpuBoard, playerBoard) => {
   }
 };
 
-const renderOutcomeRow = (cpuBoard, playerBoard) => {
+// freshIndex marks the lane that was just played so its verdict waits for the flip.
+const renderOutcomeRow = (cpuBoard, playerBoard, freshIndex = -1) => {
+  const cpuSlots = cpuArea.querySelectorAll(".slot");
+  const playerSlots = playerArea.querySelectorAll(".slot");
   roundOutcomeRow.innerHTML = "";
 
   for (let i = 0; i < TOTAL_ROUNDS; i += 1) {
@@ -459,14 +463,24 @@ const renderOutcomeRow = (cpuBoard, playerBoard) => {
     text.className = "outcome-text";
     index.textContent = `位置 ${i + 1}`;
 
+    let result = null;
     if (playerBoard[i] !== undefined && cpuBoard[i] !== undefined) {
-      const result = compareCards(cpuBoard[i], playerBoard[i]);
+      result = compareCards(cpuBoard[i], playerBoard[i]);
       text.textContent = resultLabel(result);
       chip.classList.add(result.toLowerCase());
+      chip.classList.toggle("fresh", i === freshIndex);
     } else {
       text.textContent = "待定";
       chip.classList.add("waiting");
     }
+
+    // The winning card steps forward and the losing card dims.
+    [[cpuSlots[i], "LOSE"], [playerSlots[i], "WIN"]].forEach(([slot, winsOn]) => {
+      if (!slot) return;
+      slot.classList.toggle("lane-fresh", i === freshIndex);
+      slot.classList.toggle("lane-win", result === winsOn);
+      slot.classList.toggle("lane-lose", result !== null && result !== "DRAW" && result !== winsOn);
+    });
 
     chip.append(index, text);
     roundOutcomeRow.appendChild(chip);
@@ -824,9 +838,10 @@ const renderPlayerHand = () => {
   }
 };
 
-const pushCardToArea = (area, value, roundIndex) => {
+const pushCardToArea = (area, value, roundIndex, reveal = false) => {
   const slots = area.querySelectorAll(".slot");
   renderCardIntoSlot(slots[roundIndex], area === cpuArea ? "cpu" : "player", value);
+  slots[roundIndex].classList.toggle("reveal", reveal);
 };
 
 const renderRoundRow = (majorRound, roundIndex, cpuValue, playerValue, result) => {
@@ -1060,6 +1075,7 @@ const resetRound = () => {
   state.advanced.awaitingNext = false;
   clearAdvancedSelection();
   hideResult();
+  window.clearTimeout(modalTimer);
 
   buildSlots();
   clearFunctionPlacement();
@@ -1348,14 +1364,14 @@ const playRound = (playerValue) => {
   state.cpuDeck = state.cpuDeck.filter((v) => v !== cpuValue);
   state.pendingCpuCard = null;
 
-  pushCardToArea(cpuArea, cpuValue, roundIndex);
+  pushCardToArea(cpuArea, cpuValue, roundIndex, true);
   pushCardToArea(playerArea, playerValue, roundIndex);
 
   const roundResult = compareCards(cpuValue, playerValue);
   renderRoundRow(state.advanced.majorRound, roundIndex, cpuValue, playerValue, roundResult);
 
   renderPlayerHand();
-  renderOutcomeRow(state.cpuHistory, state.playerHistory);
+  renderOutcomeRow(state.cpuHistory, state.playerHistory, roundIndex);
   updateRoundProgress();
   updateGuide();
   syncUiState();
@@ -1365,11 +1381,16 @@ const playRound = (playerValue) => {
       finalizeBasicGame();
     } else {
       prepareComputerFunctionAction();
-      openAdvancedModal();
-      setHint("功能卡視窗已開啟，現在請選擇功能卡與位置。");
+      setHint("五回合完成，接著選擇功能卡與位置。");
       advancedStatus.textContent = "請在彈出視窗中選擇功能卡與放置位置。";
       renderAdvancedCardOptions();
       syncUiState();
+      // Let the fifth card finish flipping before the dialog covers the table.
+      window.clearTimeout(modalTimer);
+      modalTimer = window.setTimeout(() => {
+        openAdvancedModal();
+        syncUiState();
+      }, reducedMotion.matches ? 0 : RESULT_REVEAL_DELAY + 200);
     }
   } else {
     prepareComputerNumberCard();
