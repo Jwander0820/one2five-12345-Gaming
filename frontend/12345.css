@@ -1762,16 +1762,28 @@ body.round-over .hand-stage {
 }
 
 @media (min-width: 1101px) {
+  /*
+   * Hand cards match the table slots. The shared width follows the viewport
+   * height and the table width so the table and the hand fit on one screen.
+   */
   .game-shell {
     position: relative;
+    container-type: inline-size;
+    --card-w: clamp(58px, min(calc((100vh - 524px) / 4.2), 9cqw), 102px);
+    --hand-w: calc(5 * var(--card-w) + 54px);
+    --table-inset: calc(12px + clamp(16px, 2vw, 26px));
+  }
+
+  .slot {
+    width: min(100%, var(--card-w));
   }
 
   .hand-stage {
     position: absolute;
-    right: 10px;
-    bottom: 10px;
+    right: var(--table-inset);
+    bottom: var(--table-inset);
     z-index: 3;
-    width: min(50%, 540px);
+    width: var(--hand-w);
     margin: 0;
     padding: 8px 10px;
     border-color: rgba(225, 200, 139, 0.36);
@@ -1794,14 +1806,13 @@ body.round-over .hand-stage {
   }
 
   .hand-stage .hand {
-    gap: 7px;
-    max-width: 390px;
+    gap: 8px;
+    max-width: none;
     margin-top: 0;
   }
 
   .hand-stage .hand .card {
-    width: min(100%, 58px);
-    border-radius: 8px;
+    width: var(--card-w);
   }
 
   .hand-stage .card:hover:not(.used):not(:disabled),
@@ -1810,8 +1821,15 @@ body.round-over .hand-stage {
     transform: translateY(-4px) rotate(-1deg);
   }
 
+  /* The prompt and the hand share one row along the bottom of the table. */
   .status-bar {
-    margin-right: calc(min(50%, 540px) + 2px);
+    min-height: calc(1.4 * var(--card-w) + 18px);
+    margin-right: calc(var(--hand-w) + 12px);
+  }
+
+  .status-bar .hint {
+    font-size: 0.95rem;
+    line-height: 1.5;
   }
 
   .game-shell.resolution-visible .hand-stage {
@@ -1819,6 +1837,7 @@ body.round-over .hand-stage {
   }
 
   .game-shell.resolution-visible .status-bar {
+    min-height: 0;
     margin-right: 0;
   }
 }
