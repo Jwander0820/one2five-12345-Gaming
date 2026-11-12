@@ -111,16 +111,11 @@ const restartBtn = document.getElementById("restart-btn");
 const difficultyButtons = [...document.querySelectorAll("[data-difficulty]")];
 const difficultyConfirmDialog = document.getElementById("difficulty-confirm-dialog");
 const difficultyConfirmTitle = document.getElementById("difficulty-confirm-title");
-const difficultyConfirmKicker = document.getElementById("difficulty-confirm-kicker");
 const difficultyConfirmCopy = document.getElementById("difficulty-confirm-copy");
 const cancelDifficultyBtn = document.getElementById("cancel-difficulty-btn");
 const confirmDifficultyBtn = document.getElementById("confirm-difficulty-btn");
 const clearObservationsBtn = document.getElementById("clear-observations-btn");
 const observationStatus = document.getElementById("observation-status");
-
-const stepChooseMode = document.getElementById("step-choose-mode");
-const stepPlayFive = document.getElementById("step-play-five");
-const stepResolveCard = document.getElementById("step-resolve-card");
 
 const resultBanner = document.getElementById("result-banner");
 const resultKicker = document.getElementById("result-kicker");
@@ -201,7 +196,7 @@ const renderCardIntoSlot = (slot, side, card) => {
     effects.forEach((effect, index) => {
       const badge = document.createElement("span");
       badge.className = "card-effect-badge";
-      badge.textContent = effect;
+      badge.textContent = effect.replace("交換", "⇄");
       badge.title = `第 ${index + 1} 個效果：${effect}`;
       stack.appendChild(badge);
     });
@@ -649,27 +644,6 @@ const renderAdvancedDecisionContext = () => {
   renderLanePreview(modalPreviewBoard, preview.cpuBoard, preview.playerBoard);
 };
 
-const setStepState = (el, { active = false, done = false }) => {
-  el.classList.toggle("active", active);
-  el.classList.toggle("current-step", active);
-  el.classList.toggle("done", done);
-};
-
-const updateGuide = () => {
-  const finishedFive = state.playerHistory.length === TOTAL_ROUNDS;
-  setStepState(stepChooseMode, { active: false, done: true });
-  setStepState(stepPlayFive, { active: !finishedFive, done: finishedFive });
-
-  if (state.mode === MODE.BASIC) {
-    setStepState(stepResolveCard, { active: false, done: true });
-  } else {
-    setStepState(stepResolveCard, {
-      active: finishedFive && !isAdvancedRoundSettled(),
-      done: isAdvancedRoundSettled(),
-    });
-  }
-};
-
 const updateRoundProgress = () => {
   roundProgress.textContent = `回合 ${state.playerHistory.length} / ${TOTAL_ROUNDS}`;
 };
@@ -1084,7 +1058,6 @@ const resetRound = () => {
   renderBoardToArea([], []);
   renderOutcomeRow([], []);
   updateRoundProgress();
-  updateGuide();
   renderAdvancedCardOptions();
   syncUiState();
   prepareComputerNumberCard();
@@ -1292,7 +1265,6 @@ const settleAdvancedMajorRound = () => {
   });
 
   updateAdvancedDashboard();
-  updateGuide();
   renderAdvancedCardOptions();
   syncUiState();
 
@@ -1373,7 +1345,6 @@ const playRound = (playerValue) => {
   renderPlayerHand();
   renderOutcomeRow(state.cpuHistory, state.playerHistory, roundIndex);
   updateRoundProgress();
-  updateGuide();
   syncUiState();
 
   if (state.playerHistory.length === TOTAL_ROUNDS) {
@@ -1520,7 +1491,6 @@ const confirmMatchChange = (kind, label, applyChange) => {
     ? `目前在第 ${state.advanced.majorRound} 大局，已完成 ${state.playerHistory.length} / ${TOTAL_ROUNDS} 回合`
     : `目前已完成 ${state.playerHistory.length} / ${TOTAL_ROUNDS} 回合`;
   difficultyConfirmTitle.textContent = `重新開始並切換${kind}？`;
-  difficultyConfirmKicker.textContent = kind === "模式" ? "CHANGE MODE" : "CHANGE DIFFICULTY";
   difficultyConfirmCopy.textContent =
     `${progress}。切換為「${label}」會清除這場對局進度。`;
 

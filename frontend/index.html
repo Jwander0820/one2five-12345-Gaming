@@ -53,14 +53,6 @@
       </div>
     </header>
 
-    <nav class="guide-strip" aria-label="遊戲進度" aria-live="polite">
-      <span id="step-choose-mode" class="guide-step current-step"><b>01</b> 選擇模式</span>
-      <span class="guide-connector" aria-hidden="true"></span>
-      <span id="step-play-five" class="guide-step"><b>02</b> 完成五回合</span>
-      <span class="guide-connector" aria-hidden="true"></span>
-      <span id="step-resolve-card" class="guide-step"><b>03</b> 功能卡結算</span>
-    </nav>
-
     <main class="layout">
       <section id="game-shell" class="game-shell" aria-label="遊戲牌桌">
         <div class="table-rim">
@@ -68,7 +60,7 @@
             <div class="battlefield-top">
               <div class="player-label enemy-label">
                 <span class="player-suit" aria-hidden="true">♦</span>
-                <div><small>OPPONENT</small><strong>電腦牌面</strong></div>
+                <strong>電腦牌面</strong>
               </div>
               <div class="round-readout">
                 <span id="round-progress">回合 0 / 5</span>
@@ -96,9 +88,9 @@
             <div class="battlefield-bottom">
               <div class="player-label player-label-self">
                 <span class="player-suit" aria-hidden="true">♠</span>
-                <div><small>YOU</small><strong>你的牌面</strong></div>
+                <strong>你的牌面</strong>
               </div>
-              <p class="ace-note"><b>A</b> 在本遊戲代表數字 <b>1</b></p>
+              <p class="ace-note"><b>A</b> 代表數字 <b>1</b></p>
             </div>
 
             <div class="status-bar" aria-live="polite">
@@ -129,7 +121,6 @@
         <section class="hand-stage" aria-labelledby="hand-title">
           <div class="hand-heading">
             <div>
-              <p class="section-kicker">YOUR HAND</p>
               <h2 id="hand-title">選擇一張牌</h2>
             </div>
             <p>點擊出牌<span class="desktop-only">，或拖曳至牌桌</span></p>
@@ -140,7 +131,6 @@
         <section id="advanced-controls" class="advanced-controls hidden" aria-live="polite">
           <div class="advanced-top">
             <div>
-              <p class="section-kicker">ADVANCED RESOLUTION</p>
               <h2>功能卡結算</h2>
             </div>
             <div class="advanced-stats">
@@ -243,7 +233,6 @@
     <section class="modal-panel">
       <div class="modal-top">
         <div>
-          <p class="section-kicker">PLAY A TACTIC</p>
           <h2 id="advanced-modal-title">選擇功能卡與位置</h2>
         </div>
         <button id="close-advanced-modal-btn" class="modal-close" type="button" aria-label="關閉功能卡視窗">×</button>
@@ -255,7 +244,6 @@
           <section class="board-preview-panel" aria-labelledby="current-board-title">
             <div class="board-preview-heading">
               <div>
-                <span class="board-preview-kicker">CURRENT BOARD</span>
                 <h3 id="current-board-title">目前盤面</h3>
               </div>
               <strong id="modal-current-score" class="board-score">玩家 0：0 電腦</strong>
@@ -269,7 +257,6 @@
           <section id="modal-preview-panel" class="board-preview-panel preview-panel pending" aria-labelledby="preview-board-title" aria-live="polite">
             <div class="board-preview-heading">
               <div>
-                <span class="board-preview-kicker">YOUR TACTIC PREVIEW</span>
                 <h3 id="preview-board-title">玩家效果預演</h3>
               </div>
               <strong id="modal-preview-score" class="board-score">等待選擇</strong>
@@ -308,7 +295,6 @@
   <dialog id="difficulty-confirm-dialog" class="difficulty-confirm-dialog" aria-labelledby="difficulty-confirm-title">
     <section class="difficulty-confirm-panel">
       <div class="difficulty-confirm-mark" aria-hidden="true">♦ ♦ ♦</div>
-      <p id="difficulty-confirm-kicker" class="section-kicker">CHANGE DIFFICULTY</p>
       <h2 id="difficulty-confirm-title">重新開始並切換難度？</h2>
       <p id="difficulty-confirm-copy" class="panel-note">切換難度會清除目前對局進度。</p>
       <div class="difficulty-confirm-actions">

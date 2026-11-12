@@ -155,7 +155,7 @@ summary:focus-visible {
   padding: 8px 16px;
   border: 0;
   border-radius: 10px;
-  color: rgba(245, 235, 221, 0.58);
+  color: rgba(245, 235, 221, 0.7);
   background: transparent;
   cursor: pointer;
   text-align: left;
@@ -175,7 +175,7 @@ summary:focus-visible {
 
 .mode-button small {
   margin-top: 3px;
-  font-size: 0.68rem;
+  font-size: 0.7rem;
 }
 
 .mode-button.active {
@@ -186,7 +186,7 @@ summary:focus-visible {
 
 .difficulty-control {
   position: relative;
-  padding: 18px 5px 5px;
+  padding: 21px 5px 5px;
   border: 1px solid rgba(225, 200, 139, 0.22);
   border-radius: 15px;
   background: rgba(4, 24, 19, 0.7);
@@ -199,9 +199,9 @@ summary:focus-visible {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: rgba(245, 235, 221, 0.48);
+  color: rgba(245, 235, 221, 0.7);
   font-family: var(--mono);
-  font-size: 0.56rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.12em;
 }
@@ -224,7 +224,7 @@ summary:focus-visible {
   padding: 4px 9px;
   border: 0;
   border-radius: 9px;
-  color: rgba(245, 235, 221, 0.5);
+  color: rgba(245, 235, 221, 0.7);
   background: transparent;
   cursor: pointer;
   text-align: center;
@@ -248,7 +248,7 @@ summary:focus-visible {
 
 .difficulty-button small {
   margin-top: 1px;
-  font-size: 0.55rem;
+  font-size: 0.7rem;
 }
 
 .difficulty-button:hover:not(.active) {
@@ -295,46 +295,9 @@ summary:focus-visible {
   stroke-width: 1.8;
 }
 
-.guide-strip {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 0;
-}
-
-.guide-step {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: rgba(245, 235, 221, 0.4);
-  font-size: 0.76rem;
-  white-space: nowrap;
-}
-
-.guide-step b {
-  color: inherit;
-  font-family: var(--mono);
-  font-size: 0.66rem;
-}
-
-.guide-step.active,
-.guide-step.current-step {
-  color: var(--brass-light);
-}
-
-.guide-step.done {
-  color: rgba(245, 235, 221, 0.72);
-}
-
-.guide-connector {
-  width: clamp(20px, 5vw, 76px);
-  height: 1px;
-  margin: 0 12px;
-  background: rgba(225, 200, 139, 0.25);
-}
-
 .layout {
   display: grid;
+  margin-top: 16px;
   grid-template-columns: minmax(0, 1fr) 310px;
   gap: 22px;
   align-items: start;
@@ -426,9 +389,9 @@ summary:focus-visible {
 
 .player-label small {
   margin-bottom: 1px;
-  color: rgba(245, 235, 221, 0.5);
+  color: rgba(245, 235, 221, 0.7);
   font-family: var(--mono);
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   letter-spacing: 0.13em;
 }
 
@@ -488,7 +451,7 @@ summary:focus-visible {
 
 .lane-numbers {
   margin-bottom: 7px;
-  color: rgba(225, 200, 139, 0.52);
+  color: rgba(225, 200, 139, 0.8);
   font-family: var(--serif);
   font-size: 0.72rem;
   text-align: center;
@@ -595,7 +558,7 @@ summary:focus-visible {
   border-radius: 999px;
   color: var(--ivory-bright);
   background: rgba(8, 37, 31, 0.9);
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   font-weight: 900;
   line-height: 1;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
@@ -632,7 +595,7 @@ summary:focus-visible {
   place-items: center;
   border-radius: 999px;
   font-family: var(--mono);
-  font-size: 0.64rem;
+  font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.08em;
 }
@@ -642,7 +605,7 @@ summary:focus-visible {
 }
 
 .outcome-chip.waiting {
-  color: rgba(245, 235, 221, 0.35);
+  color: rgba(245, 235, 221, 0.5);
   border: 1px solid rgba(245, 235, 221, 0.12);
 }
 
@@ -693,7 +656,7 @@ summary:focus-visible {
 
 .ace-note {
   margin: 0;
-  color: rgba(245, 235, 221, 0.55);
+  color: rgba(245, 235, 221, 0.7);
   font-size: 0.72rem;
 }
 
@@ -735,7 +698,7 @@ summary:focus-visible {
 
 .final-result {
   margin-top: 3px;
-  color: rgba(245, 235, 221, 0.52);
+  color: rgba(245, 235, 221, 0.7);
   font-size: 0.7rem;
 }
 
@@ -796,7 +759,7 @@ summary:focus-visible {
 
 .hand-heading > p {
   margin: 0;
-  color: rgba(245, 235, 221, 0.48);
+  color: rgba(245, 235, 221, 0.7);
   font-size: 0.72rem;
 }
 
@@ -855,7 +818,7 @@ summary:focus-visible {
   border-radius: 999px;
   color: var(--ivory-bright);
   background: rgba(8, 37, 31, 0.82);
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 800;
   transform: translate(-50%, -50%);
   white-space: nowrap;
@@ -887,11 +850,11 @@ summary:focus-visible {
   border-radius: 999px;
   color: var(--brass-light);
   font-family: var(--mono);
-  font-size: 0.66rem;
+  font-size: 0.7rem;
 }
 
 .panel-note {
-  color: rgba(245, 235, 221, 0.64);
+  color: rgba(245, 235, 221, 0.7);
   font-size: 0.8rem;
   line-height: 1.7;
 }
@@ -933,7 +896,7 @@ summary:focus-visible {
 .effect-log {
   margin: 0;
   padding-left: 20px;
-  color: rgba(245, 235, 221, 0.68);
+  color: rgba(245, 235, 221, 0.7);
   font-size: 0.76rem;
   line-height: 1.7;
 }
@@ -947,8 +910,8 @@ summary:focus-visible {
 
 .diff-grid > span,
 .decision-block > span {
-  color: rgba(245, 235, 221, 0.46);
-  font-size: 0.67rem;
+  color: rgba(245, 235, 221, 0.7);
+  font-size: 0.7rem;
 }
 
 .mini-row {
@@ -982,7 +945,7 @@ summary:focus-visible {
 }
 
 .mini-chip.empty {
-  color: rgba(245, 235, 221, 0.34);
+  color: rgba(245, 235, 221, 0.5);
   background: transparent;
 }
 
@@ -992,7 +955,7 @@ summary:focus-visible {
 }
 
 .mini-chip-rank {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
 }
 
 .side-panels {
@@ -1038,7 +1001,7 @@ summary:focus-visible {
   margin-bottom: 2px;
   color: var(--brass);
   font-family: var(--mono);
-  font-size: 0.61rem;
+  font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -1064,7 +1027,7 @@ summary:focus-visible {
 .info-content ol {
   margin: 12px 0 0;
   padding-left: 20px;
-  color: rgba(245, 235, 221, 0.67);
+  color: rgba(245, 235, 221, 0.7);
   font-size: 0.76rem;
   line-height: 1.8;
 }
@@ -1089,7 +1052,7 @@ summary:focus-visible {
 
 .function-guide span,
 .function-guide p {
-  color: rgba(245, 235, 221, 0.62);
+  color: rgba(245, 235, 221, 0.7);
   font-size: 0.71rem;
 }
 
@@ -1121,9 +1084,9 @@ td {
 }
 
 th {
-  color: rgba(245, 235, 221, 0.4);
+  color: rgba(245, 235, 221, 0.7);
   font-family: var(--mono);
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   font-weight: 500;
 }
 
@@ -1157,13 +1120,13 @@ th:first-child {
 
 .strategy-memory strong {
   color: var(--brass-light);
-  font-size: 0.68rem;
+  font-size: 0.7rem;
 }
 
 .strategy-memory span {
   margin-top: 3px;
-  color: rgba(245, 235, 221, 0.5);
-  font-size: 0.62rem;
+  color: rgba(245, 235, 221, 0.7);
+  font-size: 0.7rem;
   line-height: 1.45;
 }
 
@@ -1172,10 +1135,10 @@ th:first-child {
   padding: 6px 8px;
   border: 1px solid rgba(225, 200, 139, 0.24);
   border-radius: 7px;
-  color: rgba(245, 235, 221, 0.68);
+  color: rgba(245, 235, 221, 0.7);
   background: transparent;
   cursor: pointer;
-  font-size: 0.62rem;
+  font-size: 0.7rem;
 }
 
 .strategy-memory button:hover {
@@ -1216,9 +1179,9 @@ th:first-child {
   position: absolute;
   top: 24px;
   right: 24px;
-  color: rgba(225, 200, 139, 0.48);
+  color: rgba(225, 200, 139, 0.8);
   font-family: Georgia, serif;
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   letter-spacing: 0.1em;
 }
 
@@ -1333,20 +1296,11 @@ th:first-child {
   font-size: 1rem;
 }
 
-.board-preview-kicker {
-  display: block;
-  color: rgba(225, 200, 139, 0.56);
-  font-family: var(--mono);
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-}
-
 .board-score {
   flex: 0 0 auto;
   color: var(--brass-light);
   font-family: var(--mono);
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   font-weight: 700;
 }
 
@@ -1354,8 +1308,8 @@ th:first-child {
   display: flex;
   justify-content: space-between;
   margin: 9px 2px 5px;
-  color: rgba(245, 235, 221, 0.56);
-  font-size: 0.58rem;
+  color: rgba(245, 235, 221, 0.7);
+  font-size: 0.7rem;
 }
 
 .board-preview-legend .enemy {
@@ -1365,8 +1319,8 @@ th:first-child {
 .preview-note {
   min-height: 2.8em;
   margin: 7px 0 6px;
-  color: rgba(245, 235, 221, 0.56);
-  font-size: 0.62rem;
+  color: rgba(245, 235, 221, 0.7);
+  font-size: 0.7rem;
   line-height: 1.4;
 }
 
@@ -1388,9 +1342,9 @@ th:first-child {
 }
 
 .lane-preview-index {
-  color: rgba(225, 200, 139, 0.58);
+  color: rgba(225, 200, 139, 0.8);
   font-family: var(--mono);
-  font-size: 0.52rem;
+  font-size: 0.7rem;
   white-space: nowrap;
 }
 
@@ -1402,7 +1356,7 @@ th:first-child {
   overflow: hidden;
   border: 1px solid rgba(255, 250, 241, 0.32);
   border-radius: 7px;
-  color: rgba(245, 235, 221, 0.34);
+  color: rgba(245, 235, 221, 0.7);
   background: rgba(3, 25, 19, 0.32);
 }
 
@@ -1427,7 +1381,7 @@ th:first-child {
   place-items: center;
   border-radius: 999px;
   font-family: var(--mono);
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   font-weight: 800;
 }
 
@@ -1447,7 +1401,7 @@ th:first-child {
 }
 
 .lane-preview-outcome.waiting {
-  color: rgba(245, 235, 221, 0.34);
+  color: rgba(245, 235, 221, 0.5);
   border: 1px solid rgba(245, 235, 221, 0.1);
 }
 
@@ -1528,7 +1482,7 @@ th:first-child {
 
 .func-card-caption {
   color: var(--ink-soft);
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   font-weight: 700;
 }
 
@@ -1539,7 +1493,7 @@ th:first-child {
   padding: 7px 3px;
   border: 1px dashed rgba(225, 200, 139, 0.32);
   border-radius: 10px;
-  color: rgba(245, 235, 221, 0.54);
+  color: rgba(245, 235, 221, 0.7);
   background: rgba(0, 13, 9, 0.2);
   cursor: pointer;
 }
@@ -1557,7 +1511,7 @@ th:first-child {
 
 .func-target-index {
   font-family: var(--mono);
-  font-size: 0.6rem;
+  font-size: 0.7rem;
 }
 
 .func-target-card {
@@ -1571,7 +1525,7 @@ th:first-child {
   margin: 0;
   padding: 11px 13px;
   border-left: 3px solid var(--brass);
-  color: rgba(245, 235, 221, 0.68);
+  color: rgba(245, 235, 221, 0.7);
   background: rgba(0, 13, 9, 0.22);
   font-size: 0.78rem;
 }
@@ -1607,12 +1561,12 @@ th:first-child {
 .modal-remaining > strong {
   grid-column: 1 / -1;
   color: var(--brass-light);
-  font-size: 0.68rem;
+  font-size: 0.7rem;
 }
 
 .modal-remaining > span {
-  color: rgba(245, 235, 221, 0.48);
-  font-size: 0.62rem;
+  color: rgba(245, 235, 221, 0.7);
+  font-size: 0.7rem;
 }
 
 .modal-actions > .button {
@@ -1938,8 +1892,8 @@ body.round-over .hand-stage {
     position: static;
     justify-content: center;
     gap: 5px;
-    color: rgba(245, 235, 221, 0.58);
-    font-size: 0.55rem;
+    color: rgba(245, 235, 221, 0.7);
+    font-size: 0.7rem;
     letter-spacing: 0.04em;
     white-space: nowrap;
   }
@@ -1962,7 +1916,7 @@ body.round-over .hand-stage {
     padding: 3px 2px;
     border: 1px solid transparent;
     border-radius: 9px;
-    color: rgba(245, 235, 221, 0.54);
+    color: rgba(245, 235, 221, 0.7);
     line-height: 1;
     transform: none;
   }
@@ -1972,7 +1926,7 @@ body.round-over .hand-stage {
     min-height: 8px;
     color: rgba(225, 200, 139, 0.42);
     font-family: Georgia, serif;
-    font-size: 0.43rem;
+    font-size: 0.5rem;
     font-weight: 400;
     letter-spacing: -0.08em;
   }
@@ -1986,7 +1940,7 @@ body.round-over .hand-stage {
 
   .difficulty-button small {
     margin-top: 3px;
-    font-size: 0.47rem;
+    font-size: 0.66rem;
   }
 
   .difficulty-button:hover:not(.active) {
@@ -2024,32 +1978,6 @@ body.round-over .hand-stage {
     display: none;
   }
 
-  .guide-strip {
-    justify-content: stretch;
-    overflow: hidden;
-    padding: 14px 2px;
-  }
-
-  .guide-step {
-    font-size: 0;
-  }
-
-  .guide-step b {
-    display: grid;
-    width: 29px;
-    height: 29px;
-    place-items: center;
-    border: 1px solid currentColor;
-    border-radius: 50%;
-    font-size: 0.6rem;
-  }
-
-  .guide-connector {
-    flex: 1;
-    width: auto;
-    margin: 0 8px;
-  }
-
   .table-rim {
     padding: 5px;
     border-radius: 21px;
@@ -2075,7 +2003,7 @@ body.round-over .hand-stage {
   }
 
   .round-readout {
-    font-size: 0.64rem;
+    font-size: 0.7rem;
   }
 
   .resolution-pill {
@@ -2108,7 +2036,7 @@ body.round-over .hand-stage {
 
   .card-effect-badge {
     padding: 2px 4px;
-    font-size: 0.43rem;
+    font-size: 0.62rem;
   }
 
   .outcome-row {
@@ -2119,12 +2047,12 @@ body.round-over .hand-stage {
   .outcome-chip {
     min-height: 24px;
     padding: 0 2px;
-    font-size: 0.54rem;
+    font-size: 0.7rem;
     letter-spacing: 0.02em;
   }
 
   .ace-note {
-    font-size: 0.62rem;
+    font-size: 0.7rem;
   }
 
   .status-bar {
@@ -2189,7 +2117,7 @@ body.round-over .hand-stage {
 
   .card-used-label {
     padding: 2px 5px;
-    font-size: 0.52rem;
+    font-size: 0.7rem;
   }
 
   .advanced-controls {
@@ -2269,9 +2197,9 @@ body.round-over .hand-stage {
   .mobile-info-nav button {
     min-height: 44px;
     border: 0;
-    color: rgba(245, 235, 221, 0.66);
+    color: rgba(245, 235, 221, 0.7);
     background: transparent;
-    font-size: 0.68rem;
+    font-size: 0.7rem;
     cursor: pointer;
   }
 
@@ -2373,7 +2301,7 @@ body.round-over .hand-stage {
 
   .lane-preview-outcome {
     min-height: 20px;
-    font-size: 0.54rem;
+    font-size: 0.7rem;
   }
 
   .advanced-stage {
@@ -2394,7 +2322,7 @@ body.round-over .hand-stage {
   .selection-summary {
     min-height: 36px;
     padding: 8px 9px;
-    font-size: 0.68rem;
+    font-size: 0.7rem;
   }
 
   .modal-remaining {
@@ -2404,13 +2332,13 @@ body.round-over .hand-stage {
 
   .modal-remaining > strong,
   .modal-remaining > span {
-    font-size: 0.56rem;
+    font-size: 0.7rem;
   }
 
   .modal-remaining .card-chip {
     min-width: 27px;
     padding: 3px 5px;
-    font-size: 0.61rem;
+    font-size: 0.7rem;
   }
 
   .modal-actions > .button {
