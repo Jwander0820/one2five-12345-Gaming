@@ -628,6 +628,9 @@ const renderAdvancedDecisionContext = () => {
   renderCardChipRow(modalPlayerCardsLeft, state.advanced.playerCards, "player");
 
   const { selectedCard, selectedPos } = state.advanced;
+  const wasPending = modalPreviewPanel.classList.contains("pending");
+  // The preview only takes space once there is something to preview.
+  modalPreviewPanel.parentElement.classList.toggle("single", !selectedCard || !selectedPos);
   if (!selectedCard || !selectedPos) {
     modalPreviewPanel.classList.add("pending");
     modalPreviewScore.textContent = "等待選擇";
@@ -642,6 +645,12 @@ const renderAdvancedDecisionContext = () => {
   modalPreviewNote.textContent =
     `${cardText(selectedCard)} 作用於位置 ${selectedPos}；僅預演你的功能牌，正式結算仍會受到電腦功能牌影響。`;
   renderLanePreview(modalPreviewBoard, preview.cpuBoard, preview.playerBoard);
+  if (wasPending) {
+    modalPreviewPanel.scrollIntoView({
+      block: "nearest",
+      behavior: reducedMotion.matches ? "auto" : "smooth",
+    });
+  }
 };
 
 const updateRoundProgress = () => {
@@ -1029,7 +1038,7 @@ const syncUiState = () => {
     advancedModalIntro.textContent = "先選 1 張功能卡，再選位置。";
   } else if (!settled) {
     advancedIntro.textContent = "功能卡尚未結算，可透過彈出視窗選卡與位置。";
-    advancedModalIntro.textContent = "先選 1 張功能卡，再選擇要放置的局數位置。";
+    advancedModalIntro.textContent = "先選 1 張功能卡，再選位置；選好後會顯示效果預演。";
   } else if (state.advanced.matchFinished) {
     advancedIntro.textContent = "本場進階對局已完成，保留結算結果供你檢視。";
     advancedModalIntro.textContent = "本場進階對局已完成。";

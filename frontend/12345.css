@@ -1283,6 +1283,18 @@ th:first-child {
   box-shadow: inset 0 0 0 1px rgba(225, 200, 139, 0.08);
 }
 
+.preview-panel.pending {
+  display: none;
+}
+
+.board-comparison.single {
+  grid-template-columns: 1fr;
+}
+
+.preview-panel:not(.pending) {
+  animation: result-in 300ms ease both;
+}
+
 .board-preview-heading {
   display: flex;
   align-items: flex-end;
@@ -2416,6 +2428,52 @@ body.round-over .hand-stage {
 
   body.round-over .info-panel {
     bottom: calc(54px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Phones: keep the header compact so both card rows fit above the hand. */
+@media (max-width: 760px) {
+  .page-shell {
+    padding-top: 12px;
+  }
+
+  .game-header {
+    gap: 12px;
+    padding-bottom: 14px;
+  }
+
+  .game-header h1 {
+    font-size: clamp(1.9rem, 9vw, 2.6rem);
+  }
+
+  .subtitle {
+    display: none;
+  }
+}
+
+/* Very short windows: let the hand scroll with the page instead of covering it. */
+@media (max-width: 760px) and (max-height: 520px) {
+  body {
+    padding-bottom: calc(58px + env(safe-area-inset-bottom));
+  }
+
+  .hand-stage {
+    position: static;
+    margin-top: 10px;
+    border-width: 1px;
+    border-radius: 16px;
+    box-shadow: none;
+  }
+
+  .mobile-info-nav {
+    bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    border-bottom: 0;
+  }
+
+  .info-panel {
+    bottom: calc(54px + env(safe-area-inset-bottom));
+    max-height: calc(100dvh - 70px);
   }
 }
 
