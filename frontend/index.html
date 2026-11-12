@@ -107,10 +107,22 @@
                 <p id="hint" class="hint">選一張黑桃牌出牌。</p>
                 <p id="final-result" class="final-result">本局尚未完成。</p>
               </div>
-              <div class="action-buttons">
-                <button id="next-major-btn" class="button button-secondary hidden" type="button">進入下一大局</button>
-              </div>
             </div>
+
+            <section id="result-banner" class="result-banner hidden" aria-live="polite" aria-labelledby="result-title">
+              <div class="result-copy">
+                <p id="result-kicker" class="result-kicker">本局結果</p>
+                <h2 id="result-title" class="result-title"></h2>
+                <p id="result-detail" class="result-detail"></p>
+              </div>
+              <p class="result-score">
+                <span>你</span><b id="result-score-player">0</b><i aria-hidden="true">:</i><b id="result-score-cpu">0</b><span>電腦</span>
+              </p>
+              <div class="result-actions">
+                <button id="next-major-btn" class="button hidden" type="button">進入下一大局</button>
+                <button id="play-again-btn" class="button hidden" type="button">再玩一局</button>
+              </div>
+            </section>
           </section>
         </div>
 

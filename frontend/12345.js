@@ -11,6 +11,8 @@ const DIFFICULTY = {
   EXPERT: "expert",
 };
 const DIFFICULTY_STORAGE_KEY = "one2five.difficulty.v1";
+// Lets the last card finish revealing before the result banner appears.
+const RESULT_REVEAL_DELAY = 650;
 
 const loadDifficulty = () => {
   try {
@@ -119,6 +121,16 @@ const observationStatus = document.getElementById("observation-status");
 const stepChooseMode = document.getElementById("step-choose-mode");
 const stepPlayFive = document.getElementById("step-play-five");
 const stepResolveCard = document.getElementById("step-resolve-card");
+
+const resultBanner = document.getElementById("result-banner");
+const resultKicker = document.getElementById("result-kicker");
+const resultTitle = document.getElementById("result-title");
+const resultDetail = document.getElementById("result-detail");
+const resultScorePlayer = document.getElementById("result-score-player");
+const resultScoreCpu = document.getElementById("result-score-cpu");
+const playAgainBtn = document.getElementById("play-again-btn");
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+let celebrationTimer = null;
 
 const infoPanels = [...document.querySelectorAll(".info-panel")];
 const stackedInfoPanels = window.matchMedia("(max-width: 1100px)");
@@ -659,6 +671,76 @@ const setHint = (message) => {
   hint.textContent = message;
 };
 
+const clearCelebration = () => {
+  window.clearTimeout(celebrationTimer);
+  celebrationTimer = null;
+  document.querySelector(".celebration")?.remove();
+};
+
+// A short burst of suit marks from the result banner; pure transform/opacity.
+const celebrate = (count) => {
+  clearCelebration();
+  const layer = document.createElement("div");
+  const bounds = resultBanner.getBoundingClientRect();
+  const originX = bounds.left + bounds.width / 2;
+  const originY = bounds.top + bounds.height / 2;
+  const glyphs = ["♠", "✦", "♦", "✦"];
+
+  layer.className = "celebration";
+  layer.setAttribute("aria-hidden", "true");
+  for (let i = 0; i < count; i += 1) {
+    const piece = document.createElement("span");
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 90 + Math.random() * 230;
+    piece.className = `celebration-piece tone-${i % 3}`;
+    piece.textContent = glyphs[i % glyphs.length];
+    piece.style.left = `${originX}px`;
+    piece.style.top = `${originY}px`;
+    piece.style.fontSize = `${12 + Math.random() * 15}px`;
+    piece.style.setProperty("--dx", `${Math.cos(angle) * distance}px`);
+    piece.style.setProperty("--dy", `${Math.sin(angle) * distance * 0.7 - 70}px`);
+    piece.style.setProperty("--rot", `${(Math.random() * 2 - 1) * 540}deg`);
+    piece.style.setProperty("--delay", `${Math.random() * 180}ms`);
+    layer.appendChild(piece);
+  }
+  document.body.appendChild(layer);
+  celebrationTimer = window.setTimeout(clearCelebration, 2200);
+};
+
+const hideResult = () => {
+  clearCelebration();
+  resultBanner.className = "result-banner hidden";
+  document.body.classList.remove("round-over");
+};
+
+const showResult = ({
+  tone,
+  kicker,
+  title,
+  detail,
+  playerScore,
+  cpuScore,
+  againLabel = null,
+  particles = 0,
+  delay = 0,
+}) => {
+  clearCelebration();
+  resultBanner.className = `result-banner ${tone}`;
+  resultBanner.style.setProperty("--result-delay", `${delay}ms`);
+  resultKicker.textContent = kicker;
+  resultTitle.textContent = title;
+  resultDetail.textContent = detail;
+  resultScorePlayer.textContent = playerScore;
+  resultScoreCpu.textContent = cpuScore;
+  playAgainBtn.classList.toggle("hidden", !againLabel);
+  if (againLabel) playAgainBtn.textContent = againLabel;
+  document.body.classList.add("round-over");
+
+  if (particles > 0 && !reducedMotion.matches) {
+    celebrationTimer = window.setTimeout(() => celebrate(particles), delay + 180);
+  }
+};
+
 const updatePlacementSummary = () => {
   const { selectedCard, selectedPos, playerCards } = state.advanced;
   let message = "尚未選擇功能卡與位置。";
@@ -977,6 +1059,7 @@ const resetRound = () => {
   state.advanced.pendingCpuAction = null;
   state.advanced.awaitingNext = false;
   clearAdvancedSelection();
+  hideResult();
 
   buildSlots();
   clearFunctionPlacement();
@@ -1023,12 +1106,31 @@ const finalizeAdvancedMatch = () => {
     state.scoreboard.cpu.draw += 1;
   }
 
-  setHint("現在可按「重新開始」再玩一場。");
+  const matchTone = finalResult.classList.contains("win")
+    ? "win"
+    : finalResult.classList.contains("lose") ? "lose" : "draw";
+  const decidedByMinor = majorScore.player === majorScore.cpu && matchTone !== "draw";
+  showResult({
+    tone: matchTone,
+    kicker: "進階對局結束",
+    title: matchTone === "win"
+      ? (decidedByMinor ? "你以小分獲勝！" : "你贏了這場對局！")
+      : matchTone === "lose"
+        ? (decidedByMinor ? "電腦以小分獲勝" : "電腦贏了這場對局")
+        : "完全平手",
+    detail: `比分為大局數 · 小分 你 ${minorScore.player} : ${minorScore.cpu} 電腦`,
+    playerScore: majorScore.player,
+    cpuScore: majorScore.cpu,
+    againLabel: "再玩一場",
+    particles: matchTone === "win" ? 34 : 0,
+  });
+
+  setHint("按「再玩一場」開始新的對局。");
   nextMajorBtn.classList.add("hidden");
   resolveAdvancedBtn.disabled = true;
   updateScoreboardView();
   syncUiState();
-  restartBtn.focus({ preventScroll: true });
+  playAgainBtn.focus({ preventScroll: true });
 };
 
 const startNextMajorRound = () => {
@@ -1160,6 +1262,19 @@ const settleAdvancedMajorRound = () => {
     finalResult.className = "final-result draw";
   }
 
+  const roundTone = playerWins > cpuWins ? "win" : playerWins < cpuWins ? "lose" : "draw";
+  showResult({
+    tone: roundTone,
+    kicker: `第 ${state.advanced.majorRound} 大局結果`,
+    title: roundTone === "win" ? "這一大局你贏了" : roundTone === "lose" ? "這一大局電腦獲勝" : "這一大局平手",
+    detail:
+      `玩家 ${cardText(playerCard)}（位置 ${playerPos}）、電腦 ${cardText(cpuCard)}（位置 ${cpuPos}）· ` +
+      `大局比數 你 ${state.advanced.majorScore.player} : ${state.advanced.majorScore.cpu} 電腦`,
+    playerScore: playerWins,
+    cpuScore: cpuWins,
+    particles: roundTone === "win" ? 12 : 0,
+  });
+
   updateAdvancedDashboard();
   updateGuide();
   renderAdvancedCardOptions();
@@ -1175,7 +1290,7 @@ const settleAdvancedMajorRound = () => {
 };
 
 const finalizeBasicGame = () => {
-  const { playerWins, cpuWins } = countBoardResult(state.cpuHistory, state.playerHistory);
+  const { playerWins, cpuWins, draws } = countBoardResult(state.cpuHistory, state.playerHistory);
 
   if (strategyAvailable()) {
     window.ComputerStrategy.recordNumberSequence(MODE.BASIC, state.playerHistory);
@@ -1199,10 +1314,23 @@ const finalizeBasicGame = () => {
     state.scoreboard.cpu.draw += 1;
   }
 
-  setHint("現在可按「重新開始」再玩一局。");
+  const tone = playerWins > cpuWins ? "win" : playerWins < cpuWins ? "lose" : "draw";
+  showResult({
+    tone,
+    kicker: "本局結果",
+    title: tone === "win" ? "你贏了！" : tone === "lose" ? "電腦獲勝" : "平手",
+    detail: `五回合：${playerWins} 勝 ${cpuWins} 負${draws ? ` ${draws} 和` : ""}`,
+    playerScore: playerWins,
+    cpuScore: cpuWins,
+    againLabel: "再玩一局",
+    particles: tone === "win" ? 30 : 0,
+    delay: RESULT_REVEAL_DELAY,
+  });
+
+  setHint("按「再玩一局」開始新的一局。");
   updateScoreboardView();
   syncUiState();
-  restartBtn.focus({ preventScroll: true });
+  playAgainBtn.focus({ preventScroll: true });
 };
 
 const playRound = (playerValue) => {
@@ -1315,7 +1443,7 @@ const setMode = (mode) => {
       <li>每回合從玩家手牌出 1 張，五個數字各用一次。</li>
       <li>數字較大者勝，但 1 勝過 5、2 勝過 4；相同數字平手。</li>
       <li>主戰場會即時顯示每個位置的勝負結果。</li>
-      <li>本局結束後，可直接從主畫面重新開始。</li>
+      <li>本局結束後，按「再玩一局」即可重新開始。</li>
     `;
   }
 
@@ -1455,10 +1583,12 @@ mobileInfoButtons.forEach((button) => {
 
 drawerScrim.addEventListener("click", closeMobileInfoPanel);
 
-restartBtn.addEventListener("click", () => {
+const restartMatch = () => {
   resetMatch();
   playerHand.querySelector("button:not(:disabled)")?.focus();
-});
+};
+restartBtn.addEventListener("click", restartMatch);
+playAgainBtn.addEventListener("click", restartMatch);
 openAdvancedModalBtn.addEventListener("click", () => {
   openAdvancedModal();
   syncUiState();
